@@ -1,8 +1,6 @@
 package cn.nabr.personalspace.controller;
 
-import cn.nabr.personalspace.dto.ChangePasswordDirectRequest;
-import cn.nabr.personalspace.dto.ChangePasswordRequest;
-import cn.nabr.personalspace.dto.UpdateProfileRequest;
+import cn.nabr.personalspace.dto.*;
 import cn.nabr.personalspace.security.AuthHelper;
 import cn.nabr.personalspace.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,5 +44,72 @@ public class UserController {
     public Object changePassword(@RequestBody ChangePasswordRequest request, HttpServletRequest httpRequest) {
         var user = authHelper.requireUser(httpRequest);
         return userService.changePassword(user, request);
+    }
+
+    @GetMapping("/users")
+    public Object listUsers(HttpServletRequest request) {
+        authHelper.requireSuperAdmin(request);
+        return userService.listUsers();
+    }
+
+    @PutMapping("/users/{id}/role")
+    public Object updateRole(@PathVariable long id, @RequestBody RoleUpdateRequest request, HttpServletRequest httpRequest) {
+        authHelper.requireSuperAdmin(httpRequest);
+        return userService.updateRole(id, request);
+    }
+
+    @DeleteMapping("/users/{id}")
+    public Object deleteUser(@PathVariable long id, HttpServletRequest request) {
+        authHelper.requireSuperAdmin(request);
+        return userService.deleteUser(id);
+    }
+
+    @GetMapping("/invite-code")
+    public Object getInviteCode(HttpServletRequest request) {
+        authHelper.requireSuperAdmin(request);
+        return userService.getInviteCode();
+    }
+
+    @PostMapping("/invite-code/refresh")
+    public Object refreshInviteCode(HttpServletRequest request) {
+        authHelper.requireSuperAdmin(request);
+        return userService.refreshInviteCode();
+    }
+
+    @PostMapping("/users/{id}/reset-code")
+    public Object createResetCode(@PathVariable long id, HttpServletRequest request) {
+        authHelper.requireSuperAdmin(request);
+        return userService.createResetCode(id);
+    }
+
+    @GetMapping("/users/{id}/reset-code")
+    public Object getResetCode(@PathVariable long id, HttpServletRequest request) {
+        authHelper.requireSuperAdmin(request);
+        return userService.getResetCode(id);
+    }
+
+    @PostMapping("/reset-password")
+    public Object resetPassword(@RequestBody ResetPasswordRequest request) {
+        return userService.resetPassword(request);
+    }
+
+    @PostMapping("/visit")
+    public Object recordVisit(HttpServletRequest request) {
+        var user = authHelper.getUser(request).orElse(null);
+        String ip = UserService.extractClientIp(request);
+        String userAgent = request.getHeader("user-agent");
+        if (userAgent == null) {
+            userAgent = "";
+        }
+        if (userAgent.length() > 200) {
+            userAgent = userAgent.substring(0, 200);
+        }
+        return userService.recordVisit(user, ip, userAgent);
+    }
+
+    @GetMapping("/visitors")
+    public Object listVisitors(@RequestParam(defaultValue = "50") int limit, HttpServletRequest request) {
+        authHelper.requireSuperAdmin(request);
+        return userService.listVisitors(limit);
     }
 }

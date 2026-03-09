@@ -47,6 +47,16 @@
   - `POST /api/articles`
   - `PUT /api/articles/{id}`
   - `DELETE /api/articles/{id}`
+  - `GET /api/users`
+  - `PUT /api/users/{id}/role`
+  - `DELETE /api/users/{id}`
+  - `GET /api/invite-code`
+  - `POST /api/invite-code/refresh`
+  - `POST /api/users/{id}/reset-code`
+  - `GET /api/users/{id}/reset-code`
+  - `POST /api/reset-password`
+  - `POST /api/visit`
+  - `GET /api/visitors`
   - `GET /api/announcements`
   - `GET /api/announcements/{id}`
   - `POST /api/announcements`
@@ -55,14 +65,13 @@
 
 ## 还没迁过去的
 
-这版已经进入第五期，下面这些还没做：
+这版已经进入第六期，下面这些还没做：
 
-- 用户管理
-- 密码重置
-- 访客记录
 - 多图上传的进一步细化
 - 真正的缩略图生成（现在先复用原图 URL）
 - 前端联调与接口细节打磨
+- 更完整的删除清理（例如用户删除时清理更多关联文件）
+- 部署脚本 / 服务化说明
 
 ## 和 JS 版的对应关系
 
@@ -138,11 +147,11 @@ src/main/java/cn/nabr/personalspace
 
 我建议后面按这个顺序补：
 
-1. 用户管理
-2. 密码重置
-3. 访客记录
-4. 多图与缩略图优化
-5. 接前端联调
-6. 部署脚本 / PM2 或 systemd 说明
+1. 多图与缩略图优化
+2. 接前端联调
+3. 删除逻辑与资源清理继续补强
+4. 部署脚本 / PM2 或 systemd 说明
+5. 接沙盒前端实测
+6. 再考虑正式迁移
 
 这样你以后看源码时，会比直接啃原来那坨 JS 更有参与感。
