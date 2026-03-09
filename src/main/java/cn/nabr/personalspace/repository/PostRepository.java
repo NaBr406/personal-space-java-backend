@@ -106,15 +106,19 @@ public class PostRepository {
         return views == null ? 0 : views;
     }
 
-    public long createPost(String content, long userId) {
+    public long createPost(String content, String image, String thumbnail, String imagesJson, String thumbnailsJson, long userId) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(
-                    "INSERT INTO posts (content, user_id, created_at) VALUES (?, ?, datetime('now', 'localtime'))",
+                    "INSERT INTO posts (content, image, thumbnail, images, thumbnails, user_id, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))",
                     Statement.RETURN_GENERATED_KEYS
             );
             ps.setString(1, content);
-            ps.setLong(2, userId);
+            ps.setString(2, image);
+            ps.setString(3, thumbnail);
+            ps.setString(4, imagesJson);
+            ps.setString(5, thumbnailsJson);
+            ps.setLong(6, userId);
             return ps;
         }, keyHolder);
         Number key = keyHolder.getKey();

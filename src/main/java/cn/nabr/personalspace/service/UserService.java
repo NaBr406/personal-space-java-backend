@@ -9,22 +9,42 @@ import cn.nabr.personalspace.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final UploadService uploadService;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, UploadService uploadService) {
         this.userRepository = userRepository;
+        this.uploadService = uploadService;
     }
 
     public UserSummary updateProfile(UserSummary user, UpdateProfileRequest request) {
         String nickname = request.getNickname() == null ? "" : request.getNickname().trim();
         if (!nickname.isEmpty()) {
             userRepository.updateNickname(user.id(), nickname);
+        }
+        return userRepository.findSummaryById(user.id())
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "用户不存在"));
+    }
+
+    public UserSummary updateProfileMultipart(UserSummary user, String nickname, MultipartFile avatar) {
+        String safeNickname = nickname == null ? "" : nickname.trim();
+        if (!safeNickname.isEmpty()) {
+            userRepository.updateNickname(user.id(), safeNickname);
+        }
+        if (avatar != null && !avatar.isEmpty()) {
+            String oldAvatar = userRepository.findAvatarById(user.id()).orElse(null);
+            String newAvatar = uploadService.saveImage(avatar);
+            userRepository.updateAvatar(user.id(), newAvatar);
+            if (oldAvatar != null && !oldAvatar.equals("/default-avatar.png")) {
+                uploadService.deleteIfUploaded(oldAvatar);
+            }
         }
         return userRepository.findSummaryById(user.id())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "用户不存在"));

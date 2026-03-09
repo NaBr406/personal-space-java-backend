@@ -6,7 +6,9 @@ import cn.nabr.personalspace.security.AuthHelper;
 import cn.nabr.personalspace.service.PostService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -42,10 +44,20 @@ public class PostController {
         return postService.addView(id);
     }
 
-    @PostMapping("/api/posts")
-    public Object createPost(@RequestBody CreatePostRequest request, HttpServletRequest httpRequest) {
+    @PostMapping(value = "/api/posts", consumes = "application/json")
+    public Object createPostJson(@RequestBody CreatePostRequest request, HttpServletRequest httpRequest) {
         var user = authHelper.requireAdmin(httpRequest);
         return postService.createPost(request, user);
+    }
+
+    @PostMapping(value = "/api/posts", consumes = "multipart/form-data")
+    public Object createPostMultipart(
+            @RequestParam(value = "content", required = false) String content,
+            @RequestParam(value = "images", required = false) List<MultipartFile> images,
+            HttpServletRequest httpRequest
+    ) {
+        var user = authHelper.requireAdmin(httpRequest);
+        return postService.createPostMultipart(content, images, user);
     }
 
     @DeleteMapping("/api/posts/{id}")
@@ -75,5 +87,11 @@ public class PostController {
     public Object deleteComment(@PathVariable long id, HttpServletRequest request) {
         var user = authHelper.requireUser(request);
         return postService.deleteComment(id, user);
+    }
+
+    @PostMapping(value = "/api/upload-image", consumes = "multipart/form-data")
+    public Object uploadImage(@RequestParam("image") MultipartFile image, HttpServletRequest request) {
+        var user = authHelper.requireUser(request);
+        return postService.uploadEditorImage(image, user);
     }
 }

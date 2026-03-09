@@ -6,11 +6,8 @@ import cn.nabr.personalspace.dto.UpdateProfileRequest;
 import cn.nabr.personalspace.security.AuthHelper;
 import cn.nabr.personalspace.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api")
@@ -23,10 +20,20 @@ public class UserController {
         this.authHelper = authHelper;
     }
 
-    @PutMapping("/me")
-    public Object updateProfile(@RequestBody UpdateProfileRequest request, HttpServletRequest httpRequest) {
+    @PutMapping(value = "/me", consumes = "application/json")
+    public Object updateProfileJson(@RequestBody UpdateProfileRequest request, HttpServletRequest httpRequest) {
         var user = authHelper.requireUser(httpRequest);
         return userService.updateProfile(user, request);
+    }
+
+    @PutMapping(value = "/me", consumes = "multipart/form-data")
+    public Object updateProfileMultipart(
+            @RequestParam(value = "nickname", required = false) String nickname,
+            @RequestParam(value = "avatar", required = false) MultipartFile avatar,
+            HttpServletRequest httpRequest
+    ) {
+        var user = authHelper.requireUser(httpRequest);
+        return userService.updateProfileMultipart(user, nickname, avatar);
     }
 
     @PostMapping("/change-password-direct")

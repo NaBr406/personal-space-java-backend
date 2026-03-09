@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.LocalDate;
 
 @Component
@@ -23,7 +22,8 @@ public class StartupInitializer {
 
     @PostConstruct
     public void init() throws Exception {
-        Files.createDirectories(Path.of(appProperties.getDataDir()));
+        Files.createDirectories(appProperties.dataDirPath());
+        Files.createDirectories(appProperties.uploadDirPath());
 
         if (!authRepository.hasSuperAdmin()) {
             authRepository.createSuperAdmin(

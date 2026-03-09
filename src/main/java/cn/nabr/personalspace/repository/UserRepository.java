@@ -39,8 +39,21 @@ public class UserRepository {
         return hashes.stream().findFirst();
     }
 
+    public Optional<String> findAvatarById(long userId) {
+        List<String> avatars = jdbcTemplate.query(
+                "SELECT avatar FROM users WHERE id = ?",
+                (rs, rowNum) -> rs.getString("avatar"),
+                userId
+        );
+        return avatars.stream().findFirst();
+    }
+
     public void updateNickname(long userId, String nickname) {
         jdbcTemplate.update("UPDATE users SET nickname = ? WHERE id = ?", nickname, userId);
+    }
+
+    public void updateAvatar(long userId, String avatar) {
+        jdbcTemplate.update("UPDATE users SET avatar = ? WHERE id = ?", avatar, userId);
     }
 
     public void updatePasswordHash(long userId, String passwordHash) {

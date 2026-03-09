@@ -7,9 +7,12 @@ import cn.nabr.personalspace.model.CommentView;
 import cn.nabr.personalspace.model.PostView;
 import cn.nabr.personalspace.model.UserSummary;
 import cn.nabr.personalspace.repository.PostRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -18,9 +21,12 @@ import java.util.Map;
 @Service
 public class PostService {
     private final PostRepository postRepository;
+    private final UploadService uploadService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public PostService(PostRepository postRepository) {
+    public PostService(PostRepository postRepository, UploadService uploadService) {
         this.postRepository = postRepository;
+        this.uploadService = uploadService;
     }
 
     public Map<String, Object> listPosts(Integer currentUserId, int page, int limit, String start, String end) {
@@ -52,18 +58,36 @@ public class PostService {
 
     @Transactional
     public PostView createPost(CreatePostRequest request, UserSummary user) {
-        String content = request.getContent() == null ? null : request.getContent().trim();
-        if (content == null || content.isEmpty()) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "内容不能为空");
+        return createPostInternal(request.getContent(), List.of(), user);
+    }
+
+    @Transactional
+    public PostView createPostMultipart(String content, List<MultipartFile> images, UserSummary user) {
+        return createPostInternal(content, images, user);
+    }
+
+    private PostView createPostInternal(String rawContent, List<MultipartFile> images, UserSummary user) {
+        String content = rawContent == null ? null : rawContent.trim();
+        List<String> imagePaths = uploadService.saveImages(images, 9);
+        if ((content == null || content.isEmpty()) && imagePaths.isEmpty()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "内容和图片至少需要一个");
         }
-        long postId = postRepository.createPost(content, user.id());
+
+        String image = imagePaths.isEmpty() ? null : imagePaths.get(0);
+        String thumbnail = image;
+        String imagesJson = imagePaths.isEmpty() ? null : toJson(imagePaths);
+        String thumbnailsJson = imagesJson;
+
+        long postId = postRepository.createPost(content, image, thumbnail, imagesJson, thumbnailsJson, user.id());
         return getPost(postId, Math.toIntExact(user.id()));
     }
 
     @Transactional
     public Map<String, Object> deletePost(long postId) {
+        PostView post = getPost(postId, null);
         postRepository.findPostOwner(postId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "动态不存在"));
+        deletePostFiles(post);
         postRepository.deletePostAndRelations(postId);
         return Map.of("message", "已删除");
     }
@@ -146,5 +170,41 @@ public class PostService {
         postRepository.deleteNotificationsByCommentId(commentId);
         postRepository.deleteCommentById(commentId);
         return Map.of("ok", true);
+    }
+
+    public Map<String, Object> uploadEditorImage(MultipartFile image, UserSummary user) {
+        if (!"superadmin".equals(user.role())) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "需要超级管理员权限");
+        }
+        String url = uploadService.saveImage(image);
+        return Map.of(
+                "msg", "",
+                "code", 0,
+                "data", Map.of(
+                        "errFiles", List.of(),
+                        "succMap", Map.of(image.getOriginalFilename(), url)
+                )
+        );
+    }
+
+    private void deletePostFiles(PostView post) {
+        uploadService.deleteIfUploaded(post.image());
+        if (post.images() != null && !post.images().isBlank()) {
+            try {
+                List<String> images = objectMapper.readValue(post.images(), objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
+                for (String image : images) {
+                    uploadService.deleteIfUploaded(image);
+                }
+            } catch (JsonProcessingException ignored) {
+            }
+        }
+    }
+
+    private String toJson(List<String> values) {
+        try {
+            return objectMapper.writeValueAsString(values);
+        } catch (JsonProcessingException e) {
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "图片数据保存失败");
+        }
     }
 }

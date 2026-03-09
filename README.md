@@ -40,6 +40,7 @@
   - `PUT /api/me`
   - `POST /api/change-password`
   - `POST /api/change-password-direct`
+  - `POST /api/upload-image`
   - `GET /api/announcements`
   - `GET /api/announcements/{id}`
   - `POST /api/announcements`
@@ -48,15 +49,14 @@
 
 ## 还没迁过去的
 
-这版已经进入第三期，下面这些还没做：
+这版已经进入第四期，下面这些还没做：
 
-- 图片上传（现在还是纯文字发帖）
-- 用户头像上传
 - 用户管理
 - 文章 / 博客 / 杂谈
 - 密码重置
 - 访客记录
-- 多图上传与缩略图
+- 多图上传的进一步细化
+- 真正的缩略图生成（现在先复用原图 URL）
 
 ## 和 JS 版的对应关系
 
@@ -120,15 +120,23 @@ src/main/java/cn/nabr/personalspace
 - `APP_ENV`：环境名，默认 `sandbox`
 - `ADMIN_PASSWORD`：默认超管密码
 
+## 当前上传实现说明
+
+- 发帖已经支持 `multipart/form-data`
+- 头像上传已经支持 `PUT /api/me` + `avatar`
+- 上传后的文件会保存到 `./data/uploads/`
+- 访问路径是 `/uploads/文件名`
+- 目前 **缩略图先直接复用原图 URL**，后面再补真正缩略图生成
+
 ## 适合怎么继续往下做
 
 我建议后面按这个顺序补：
 
-1. 上传图片 / 头像上传
-2. 文章系统
-3. 用户管理
-4. 密码重置
-5. 访客记录
-6. 多图与缩略图
+1. 文章系统
+2. 用户管理
+3. 密码重置
+4. 访客记录
+5. 多图与缩略图优化
+6. 接前端联调
 
 这样你以后看源码时，会比直接啃原来那坨 JS 更有参与感。
