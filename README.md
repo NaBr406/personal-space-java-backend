@@ -26,23 +26,32 @@
   - `GET /api/me`
   - `GET /api/posts`
   - `GET /api/posts/{id}`
+  - `POST /api/posts`
+  - `DELETE /api/posts/{id}`
   - `POST /api/posts/{id}/view`
+  - `POST /api/posts/{id}/like`
+  - `GET /api/posts/{id}/comments`
+  - `POST /api/posts/{id}/comments`
+  - `DELETE /api/comments/{id}`
+  - `GET /api/notifications`
+  - `GET /api/notifications/unread-count`
+  - `POST /api/notifications/read-all`
+  - `POST /api/notifications/{id}/read`
   - `GET /api/announcements`
   - `GET /api/announcements/{id}`
 
 ## 还没迁过去的
 
-这只是第一期，下面这些还没做：
+这版已经进入第二期，下面这些还没做：
 
-- 发帖
-- 点赞 / 评论 / 回复
-- 上传图片
-- 通知
+- 图片上传（现在还是纯文字发帖）
+- 用户资料修改
 - 用户管理
-- 公告发布/删除/置顶
+- 公告发布 / 删除 / 置顶
 - 文章 / 博客 / 杂谈
 - 密码重置
 - 访客记录
+- 多图上传与缩略图
 
 ## 和 JS 版的对应关系
 
@@ -110,11 +119,11 @@ src/main/java/cn/nabr/personalspace
 
 我建议后面按这个顺序补：
 
-1. 发帖 + 删除帖子
-2. 点赞 / 评论 / 回复
-3. 上传图片
-4. 用户资料修改
-5. 公告管理
-6. 文章系统
+1. 上传图片
+2. 用户资料修改
+3. 公告管理
+4. 文章系统
+5. 用户管理
+6. 密码重置 / 访客记录
 
 这样你以后看源码时，会比直接啃原来那坨 JS 更有参与感。
