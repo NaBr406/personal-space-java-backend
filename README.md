@@ -37,17 +37,22 @@
   - `GET /api/notifications/unread-count`
   - `POST /api/notifications/read-all`
   - `POST /api/notifications/{id}/read`
+  - `PUT /api/me`
+  - `POST /api/change-password`
+  - `POST /api/change-password-direct`
   - `GET /api/announcements`
   - `GET /api/announcements/{id}`
+  - `POST /api/announcements`
+  - `DELETE /api/announcements/{id}`
+  - `PATCH /api/announcements/{id}/pin`
 
 ## 还没迁过去的
 
-这版已经进入第二期，下面这些还没做：
+这版已经进入第三期，下面这些还没做：
 
 - 图片上传（现在还是纯文字发帖）
-- 用户资料修改
+- 用户头像上传
 - 用户管理
-- 公告发布 / 删除 / 置顶
 - 文章 / 博客 / 杂谈
 - 密码重置
 - 访客记录
@@ -119,11 +124,11 @@ src/main/java/cn/nabr/personalspace
 
 我建议后面按这个顺序补：
 
-1. 上传图片
-2. 用户资料修改
-3. 公告管理
-4. 文章系统
-5. 用户管理
-6. 密码重置 / 访客记录
+1. 上传图片 / 头像上传
+2. 文章系统
+3. 用户管理
+4. 密码重置
+5. 访客记录
+6. 多图与缩略图
 
 这样你以后看源码时，会比直接啃原来那坨 JS 更有参与感。

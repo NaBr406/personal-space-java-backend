@@ -29,6 +29,14 @@ public class AuthHelper {
         return user;
     }
 
+    public UserSummary requireSuperAdmin(HttpServletRequest request) {
+        UserSummary user = requireUser(request);
+        if (!"superadmin".equals(user.role())) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "需要超级管理员权限");
+        }
+        return user;
+    }
+
     public java.util.Optional<UserSummary> getUser(HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || authHeader.isBlank() || !authHeader.startsWith("Bearer ")) {

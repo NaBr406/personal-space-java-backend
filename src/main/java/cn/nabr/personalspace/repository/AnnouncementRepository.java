@@ -3,8 +3,12 @@ package cn.nabr.personalspace.repository;
 import cn.nabr.personalspace.model.AnnouncementView;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
 
@@ -51,5 +55,34 @@ public class AnnouncementRepository {
                 WHERE a.id = ?
                 """, mapper, id);
         return list.stream().findFirst();
+    }
+
+    public long create(long userId, String title, String content, boolean pinned) {
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(
+                    "INSERT INTO announcements (user_id, title, content, pinned, created_at) VALUES (?, ?, ?, ?, datetime('now', 'localtime'))",
+                    Statement.RETURN_GENERATED_KEYS
+            );
+            ps.setLong(1, userId);
+            ps.setString(2, title);
+            ps.setString(3, content);
+            ps.setInt(4, pinned ? 1 : 0);
+            return ps;
+        }, keyHolder);
+        Number key = keyHolder.getKey();
+        if (key != null) {
+            return key.longValue();
+        }
+        Long id = jdbcTemplate.queryForObject("SELECT id FROM announcements ORDER BY id DESC LIMIT 1", Long.class);
+        return id == null ? 0L : id;
+    }
+
+    public void delete(long id) {
+        jdbcTemplate.update("DELETE FROM announcements WHERE id = ?", id);
+    }
+
+    public void updatePinned(long id, boolean pinned) {
+        jdbcTemplate.update("UPDATE announcements SET pinned = ? WHERE id = ?", pinned ? 1 : 0, id);
     }
 }
