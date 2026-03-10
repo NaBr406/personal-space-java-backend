@@ -97,10 +97,11 @@ public class PostService {
     }
 
     @Transactional
-    public Map<String, Object> deletePost(long postId) {
+    public Map<String, Object> deletePost(long postId, UserSummary user) {
         PostView post = getPost(postId, null);
-        postRepository.findPostOwner(postId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "动态不存在"));
+        if (post.userId() != user.id() && !"superadmin".equals(user.role())) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "无权删除");
+        }
         deletePostFiles(post);
         postRepository.deletePostAndRelations(postId);
         return Map.of("message", "已删除");

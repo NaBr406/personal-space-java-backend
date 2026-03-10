@@ -49,6 +49,11 @@ This repo is being matched against the existing JS frontend in
     `注册请求过于频繁，请稍后再试`
   - this closes the last obvious auth-page behavior gap found in the frontend
     compatibility review
+- Main feed post deletion now follows the current `public/app.js` UI rule
+  - `DELETE /api/posts/:id` allows the post owner even if that user no longer
+    has the `admin` role
+  - superadmins can still delete any post
+  - this matches the delete button logic shown in the main feed cards
 
 ## Remaining small differences
 

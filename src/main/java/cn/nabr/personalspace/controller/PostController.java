@@ -62,8 +62,8 @@ public class PostController {
 
     @DeleteMapping("/api/posts/{id}")
     public Object deletePost(@PathVariable long id, HttpServletRequest request) {
-        authHelper.requireAdmin(request);
-        return postService.deletePost(id);
+        var user = authHelper.requireUser(request);
+        return postService.deletePost(id, user);
     }
 
     @PostMapping("/api/posts/{id}/like")
