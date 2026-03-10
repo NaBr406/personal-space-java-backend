@@ -20,11 +20,16 @@ public class AnnouncementService {
         this.announcementRepository = announcementRepository;
     }
 
-    public Map<String, Object> listAnnouncements(int page, int limit) {
-        int safePage = Math.max(1, page);
-        int safeLimit = Math.min(50, Math.max(1, limit));
-        var announcements = announcementRepository.findPage(safePage, safeLimit);
+    public Map<String, Object> listAnnouncements(Integer page, Integer limit) {
         int total = announcementRepository.countAll();
+        boolean useFrontendDefault = page == null && limit == null;
+        int safePage = useFrontendDefault ? 1 : Math.max(1, page == null ? 1 : page);
+        int safeLimit = useFrontendDefault
+                ? Math.max(total, 1)
+                : Math.min(50, Math.max(1, limit == null ? 20 : limit));
+        var announcements = total == 0
+                ? java.util.List.<AnnouncementView>of()
+                : announcementRepository.findPage(safePage, safeLimit);
 
         Map<String, Object> pagination = new LinkedHashMap<>();
         pagination.put("page", safePage);

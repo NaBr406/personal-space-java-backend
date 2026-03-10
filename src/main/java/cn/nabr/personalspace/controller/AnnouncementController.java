@@ -21,8 +21,8 @@ public class AnnouncementController {
 
     @GetMapping
     public Map<String, Object> listAnnouncements(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int limit
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer limit
     ) {
         return announcementService.listAnnouncements(page, limit);
     }

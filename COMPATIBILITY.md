@@ -42,6 +42,13 @@ This repo is being matched against the existing JS frontend in
 
 ## Fixed in this pass
 
+- Announcement list loading now matches the JS frontend's no-pagination pages
+  - `GET /api/announcements` returns the full list when the frontend omits
+    `page` and `limit`
+  - explicit paginated callers can still send `page` / `limit` and keep the
+    existing paginated response shape
+  - this prevents older announcements from disappearing from
+    `public/app.js` and `public/announcements.html`
 - Auth throttling is now aligned with the JS backend
   - repeated login attempts now return
     `登录尝试过于频繁，请稍后再试`
