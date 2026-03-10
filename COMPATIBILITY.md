@@ -55,6 +55,13 @@ This repo is being matched against the existing JS frontend in
     generation cannot decode an otherwise accepted upload
   - the backend now keeps the original uploaded image as the card thumbnail,
     which matches the reference JS behavior used by `public/app.js`
+- Upload validation now follows the JS backend's allowed-format and size rules
+  - post images, avatar uploads, article covers, and editor image uploads now
+    reject non-`jpg`/`jpeg`/`png`/`gif`/`webp` files with the same contract the
+    JS stack applies before saving media
+  - oversized multipart uploads now return `图片不能超过 100MB` instead of a
+    generic server error, which keeps the `public/app.js` and
+    `public/article.js` upload toasts understandable
 - Announcement list loading now matches the JS frontend's no-pagination pages
   - `GET /api/announcements` returns the full list when the frontend omits
     `page` and `limit`

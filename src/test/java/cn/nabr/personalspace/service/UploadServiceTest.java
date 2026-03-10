@@ -1,6 +1,7 @@
 package cn.nabr.personalspace.service;
 
 import cn.nabr.personalspace.config.AppProperties;
+import cn.nabr.personalspace.exception.ApiException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.web.MockMultipartFile;
@@ -14,6 +15,7 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class UploadServiceTest {
@@ -52,6 +54,21 @@ class UploadServiceTest {
         assertNotEquals(uploaded.imageUrl(), uploaded.thumbnailUrl());
         assertTrue(Files.exists(uploadPath(uploaded.imageUrl())));
         assertTrue(Files.exists(uploadPath(uploaded.thumbnailUrl())));
+    }
+
+    @Test
+    void rejectsFormatsOutsideFrontendUploadContract() {
+        UploadService uploadService = new UploadService(appProperties());
+        MockMultipartFile svgFile = new MockMultipartFile(
+                "image",
+                "vector.svg",
+                "image/svg+xml",
+                "<svg></svg>".getBytes()
+        );
+
+        ApiException error = assertThrows(ApiException.class, () -> uploadService.saveImage(svgFile));
+
+        assertEquals("只支持 jpg/png/gif/webp 格式", error.getMessage());
     }
 
     private AppProperties appProperties() {

@@ -18,12 +18,15 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 public class UploadService {
     private static final int THUMBNAIL_MAX_WIDTH = 480;
     private static final int THUMBNAIL_MAX_HEIGHT = 480;
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp");
+    private static final Set<String> ALLOWED_MIME_HINTS = Set.of("jpg", "jpeg", "png", "gif", "webp");
 
     private final AppProperties appProperties;
 
@@ -152,9 +155,13 @@ public class UploadService {
         if (file == null || file.isEmpty()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "请选择图片");
         }
-        String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "只能上传图片文件");
+        String originalName = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase(Locale.ROOT);
+        String contentType = file.getContentType() == null ? "" : file.getContentType().toLowerCase(Locale.ROOT);
+        String extension = extractOriginalExtension(originalName);
+        boolean allowedExtension = ALLOWED_EXTENSIONS.contains(extension);
+        boolean allowedMime = ALLOWED_MIME_HINTS.stream().anyMatch(contentType::contains);
+        if (!allowedExtension || !allowedMime) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "只支持 jpg/png/gif/webp 格式");
         }
     }
 
@@ -237,5 +244,13 @@ public class UploadService {
             return ".png";
         }
         return ext;
+    }
+
+    private String extractOriginalExtension(String filename) {
+        int idx = filename.lastIndexOf('.');
+        if (idx < 0) {
+            return "";
+        }
+        return filename.substring(idx).toLowerCase(Locale.ROOT);
     }
 }
