@@ -42,6 +42,11 @@ This repo is being matched against the existing JS frontend in
 
 ## Fixed in this pass
 
+- Dynamic post image uploads now match the JS backend's thumbnail fallback
+  - `POST /api/posts` no longer fails the whole publish flow when thumbnail
+    generation cannot decode an otherwise accepted upload
+  - the backend now keeps the original uploaded image as the card thumbnail,
+    which matches the reference JS behavior used by `public/app.js`
 - Announcement list loading now matches the JS frontend's no-pagination pages
   - `GET /api/announcements` returns the full list when the frontend omits
     `page` and `limit`

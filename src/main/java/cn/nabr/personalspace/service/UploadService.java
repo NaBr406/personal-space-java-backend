@@ -76,22 +76,26 @@ public class UploadService {
         String thumbnailFilename = baseName + "_thumb.jpg";
         Path imagePath = uploadDirPath().resolve(imageFilename);
         Path thumbnailPath = uploadDirPath().resolve(thumbnailFilename);
+        String imageUrl = "/uploads/" + imageFilename;
+        String thumbnailUrl = imageUrl;
 
         try {
             Files.createDirectories(uploadDirPath());
             Files.copy(file.getInputStream(), imagePath, StandardCopyOption.REPLACE_EXISTING);
-            generateThumbnail(imagePath, thumbnailPath);
         } catch (IOException e) {
             deleteIfExists(imagePath);
             deleteIfExists(thumbnailPath);
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "保存图片失败");
-        } catch (RuntimeException e) {
-            deleteIfExists(imagePath);
-            deleteIfExists(thumbnailPath);
-            throw e;
         }
 
-        return new UploadedImage("/uploads/" + imageFilename, "/uploads/" + thumbnailFilename);
+        try {
+            generateThumbnail(imagePath, thumbnailPath);
+            thumbnailUrl = "/uploads/" + thumbnailFilename;
+        } catch (IOException | RuntimeException e) {
+            deleteIfExists(thumbnailPath);
+        }
+
+        return new UploadedImage(imageUrl, thumbnailUrl);
     }
 
     public List<UploadedImage> saveImagesWithThumbnails(List<MultipartFile> files, int maxCount) {
