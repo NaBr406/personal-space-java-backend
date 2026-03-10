@@ -102,7 +102,11 @@ public class ArticleRepository {
 
     public int incrementViews(long id) {
         jdbcTemplate.update("UPDATE articles SET views = views + 1 WHERE id = ?", id);
-        Integer views = jdbcTemplate.queryForObject("SELECT views FROM articles WHERE id = ?", Integer.class, id);
-        return views == null ? 0 : views;
+        List<Integer> views = jdbcTemplate.query(
+                "SELECT views FROM articles WHERE id = ?",
+                (rs, rowNum) -> rs.getInt("views"),
+                id
+        );
+        return views.stream().findFirst().orElse(0);
     }
 }

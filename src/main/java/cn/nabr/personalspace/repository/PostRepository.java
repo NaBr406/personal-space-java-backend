@@ -102,8 +102,12 @@ public class PostRepository {
 
     public int incrementViews(long id) {
         jdbcTemplate.update("UPDATE posts SET views = views + 1 WHERE id = ?", id);
-        Integer views = jdbcTemplate.queryForObject("SELECT views FROM posts WHERE id = ?", Integer.class, id);
-        return views == null ? 0 : views;
+        List<Integer> views = jdbcTemplate.query(
+                "SELECT views FROM posts WHERE id = ?",
+                (rs, rowNum) -> rs.getInt("views"),
+                id
+        );
+        return views.stream().findFirst().orElse(0);
     }
 
     public long createPost(String content, String image, String thumbnail, String imagesJson, String thumbnailsJson, long userId) {

@@ -42,6 +42,14 @@ This repo is being matched against the existing JS frontend in
 
 ## Fixed in this pass
 
+- Stale detail-route view pings now match the JS backend fallback
+  - `POST /api/posts/:id/view` and `POST /api/articles/:id/view` now return
+    `{ views: 0 }` when the target has already been deleted or never existed
+  - this matches the background view-count requests fired by
+    `public/app.js` and `public/article.js` before they confirm the detail
+    record still exists
+  - it avoids noisy 500 responses during real frontend flows like opening an
+    old shared link or a just-deleted detail page
 - Dynamic post image uploads now match the JS backend's thumbnail fallback
   - `POST /api/posts` no longer fails the whole publish flow when thumbnail
     generation cannot decode an otherwise accepted upload
