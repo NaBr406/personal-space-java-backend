@@ -157,6 +157,31 @@ src/main/java/cn/nabr/personalspace
   - 更新头像、更新文章封面时，会在更新成功后删除旧文件
   - 删除用户时，会清理该用户头像、其所有帖子图片/缩略图、其所有文章封面
 
+## 本地联调前端
+
+仓库里带了一个简易代理脚本：
+
+```bash
+python3 tools/frontend_proxy.py
+```
+
+默认会做两件事：
+
+- 把 `/api/*` 和 `/uploads/*` 转发到 Java 后端 `http://127.0.0.1:3001`
+- 其它页面资源直接从现有前端目录 `personal-space-java-sandbox/public` 读取
+
+启动后访问：
+
+```text
+http://127.0.0.1:8081
+```
+
+如果你想换端口或后端地址，也可以：
+
+```bash
+python3 tools/frontend_proxy.py --port 8082 --backend http://127.0.0.1:3001
+```
+
 ## 适合怎么继续往下做
 
 我建议后面按这个顺序补：
