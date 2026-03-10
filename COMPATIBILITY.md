@@ -6,14 +6,19 @@ This repo is being matched against the existing JS frontend in
 ## Checked in this pass
 
 - `public/app.js` main/dynamic page
-  - login state via `/api/me`
+  - login, register, logout, reset-password, profile update
   - dynamic list/detail, likes, comments, visitors, notifications
   - announcements area embedded in the main page
 - `public/article.js` blog / chitchat page
   - article list/detail
   - blog/chitchat publish + edit + delete flows
   - editor image upload contract
-- superadmin panel
+- `public/announcements.html`
+  - announcement list/detail
+  - publish, delete, pin flows
+- `public/detail.html`
+  - standalone post detail + view count
+- superadmin panel inside `public/app.js`
   - `/api/users`
   - role update
   - invite code fetch/refresh
@@ -31,23 +36,23 @@ This repo is being matched against the existing JS frontend in
   `{ code, msg, data: { errFiles, succMap } }`
 - Superadmin-only endpoints are present for users, invite codes, reset codes,
   visitors, and announcements
+- Auth flows now follow the JS backend throttling rules
+  - `POST /api/register`: 5 requests per minute per client IP
+  - `POST /api/login`: 10 requests per minute per client IP
 
 ## Fixed in this pass
 
-- Invite code day handling now follows the JS backend rule consistently:
-  use the UTC calendar day everywhere
-  - this avoids midnight mismatches between
-    `GET /api/invite-code`,
-    `POST /api/invite-code/refresh`,
-    startup invite-code creation,
-    and `POST /api/register`
-- SQLite foreign keys are now explicitly enabled for Java connections
-  - this makes delete cascades behave like the schema intends
-  - it especially helps superadmin cleanup flows stay consistent after deleting
-    posts/users
+- Auth throttling is now aligned with the JS backend
+  - repeated login attempts now return
+    `登录尝试过于频繁，请稍后再试`
+  - repeated register attempts now return
+    `注册请求过于频繁，请稍后再试`
+  - this closes the last obvious auth-page behavior gap found in the frontend
+    compatibility review
 
 ## Remaining small differences
 
 - Some non-critical error text may still differ from the original Node routes
-- The Java backend is slightly stricter in a few validations and cleanup paths,
-  but the current JS frontend pages checked in this pass should continue to work
+- The Java backend is slightly stricter in a few validations and cleanup paths
+- Static HTML route hosting still belongs to the JS frontend/proxy setup;
+  this Java backend is focused on API compatibility
