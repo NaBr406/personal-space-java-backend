@@ -66,6 +66,11 @@ This repo is being matched against the existing JS frontend in
     has the `admin` role
   - superadmins can still delete any post
   - this matches the delete button logic shown in the main feed cards
+- Legacy SQLite comment schemas now self-heal for the reply UI in `public/app.js`
+  - startup now backfills `comments.parent_id` and `comments.reply_to_user_id`
+    when the Java backend is pointed at an older JS-created database
+  - this keeps comment list and reply submit flows working instead of failing
+    with missing-column errors on post detail pages
 
 ## Remaining small differences
 
