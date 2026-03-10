@@ -93,6 +93,13 @@ This repo is being matched against the existing JS frontend in
     when the Java backend is pointed at an older JS-created database
   - this keeps comment list and reply submit flows working instead of failing
     with missing-column errors on post detail pages
+- Legacy JS SQLite post/user columns now self-heal for `public/app.js`
+  - startup now backfills `posts.thumbnail`, `posts.images`,
+    `posts.thumbnails`, `posts.user_id`, and `users.register_ip` when those
+    later-added columns are missing from an older database
+  - this keeps main-feed loading, post publishing, and register/IP-check flows
+    working instead of failing with missing-column errors after switching the
+    frontend proxy to the Java backend
 
 ## Remaining small differences
 

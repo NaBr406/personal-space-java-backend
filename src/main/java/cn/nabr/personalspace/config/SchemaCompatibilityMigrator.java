@@ -14,6 +14,11 @@ public class SchemaCompatibilityMigrator {
 
     @PostConstruct
     public void migrate() {
+        ensureColumn("posts", "images", "ALTER TABLE posts ADD COLUMN images TEXT");
+        ensureColumn("posts", "thumbnails", "ALTER TABLE posts ADD COLUMN thumbnails TEXT");
+        ensureColumn("posts", "user_id", "ALTER TABLE posts ADD COLUMN user_id INTEGER");
+        ensureColumn("posts", "thumbnail", "ALTER TABLE posts ADD COLUMN thumbnail TEXT");
+        ensureColumn("users", "register_ip", "ALTER TABLE users ADD COLUMN register_ip TEXT");
         ensureColumn("comments", "parent_id", "ALTER TABLE comments ADD COLUMN parent_id INTEGER");
         ensureColumn("comments", "reply_to_user_id", "ALTER TABLE comments ADD COLUMN reply_to_user_id INTEGER");
     }
