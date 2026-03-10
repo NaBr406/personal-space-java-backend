@@ -15,8 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class PostService {
@@ -68,18 +71,29 @@ public class PostService {
 
     private PostView createPostInternal(String rawContent, List<MultipartFile> images, UserSummary user) {
         String content = rawContent == null ? null : rawContent.trim();
-        List<String> imagePaths = uploadService.saveImages(images, 9);
-        if ((content == null || content.isEmpty()) && imagePaths.isEmpty()) {
+        List<UploadService.UploadedImage> uploadedImages = uploadService.saveImagesWithThumbnails(images, 9);
+        if ((content == null || content.isEmpty()) && uploadedImages.isEmpty()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "内容和图片至少需要一个");
         }
 
-        String image = imagePaths.isEmpty() ? null : imagePaths.get(0);
-        String thumbnail = image;
-        String imagesJson = imagePaths.isEmpty() ? null : toJson(imagePaths);
-        String thumbnailsJson = imagesJson;
+        List<String> imageUrls = uploadedImages.stream().map(UploadService.UploadedImage::imageUrl).collect(Collectors.toList());
+        List<String> thumbnailUrls = uploadedImages.stream().map(UploadService.UploadedImage::thumbnailUrl).collect(Collectors.toList());
+        String image = imageUrls.isEmpty() ? null : imageUrls.get(0);
+        String thumbnail = thumbnailUrls.isEmpty() ? null : thumbnailUrls.get(0);
+        String imagesJson = imageUrls.isEmpty() ? null : toJson(imageUrls);
+        String thumbnailsJson = thumbnailUrls.isEmpty() ? null : toJson(thumbnailUrls);
 
-        long postId = postRepository.createPost(content, image, thumbnail, imagesJson, thumbnailsJson, user.id());
-        return getPost(postId, Math.toIntExact(user.id()));
+        boolean postCreated = false;
+        try {
+            long postId = postRepository.createPost(content, image, thumbnail, imagesJson, thumbnailsJson, user.id());
+            postCreated = true;
+            return getPost(postId, Math.toIntExact(user.id()));
+        } catch (RuntimeException e) {
+            if (!postCreated) {
+                uploadService.deleteUploadedImages(uploadedImages);
+            }
+            throw e;
+        }
     }
 
     @Transactional
@@ -188,16 +202,32 @@ public class PostService {
     }
 
     private void deletePostFiles(PostView post) {
-        uploadService.deleteIfUploaded(post.image());
-        if (post.images() != null && !post.images().isBlank()) {
-            try {
-                List<String> images = objectMapper.readValue(post.images(), objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
-                for (String image : images) {
-                    uploadService.deleteIfUploaded(image);
-                }
-            } catch (JsonProcessingException ignored) {
-            }
+        Set<String> files = new LinkedHashSet<>();
+        addIfNotBlank(files, post.image());
+        addIfNotBlank(files, post.thumbnail());
+        files.addAll(parseJsonArray(post.images()));
+        files.addAll(parseJsonArray(post.thumbnails()));
+        for (String file : files) {
+            uploadService.deleteIfUploaded(file);
         }
+    }
+
+    private List<String> parseJsonArray(String json) {
+        if (json == null || json.isBlank()) {
+            return List.of();
+        }
+        try {
+            return objectMapper.readValue(json, objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
+        } catch (JsonProcessingException ignored) {
+            return List.of();
+        }
+    }
+
+    private void addIfNotBlank(Set<String> files, String value) {
+        if (value == null || value.isBlank()) {
+            return;
+        }
+        files.add(value);
     }
 
     private String toJson(List<String> values) {

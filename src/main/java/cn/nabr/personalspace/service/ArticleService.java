@@ -64,8 +64,17 @@ public class ArticleService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "内容不能为空");
         }
         String coverImage = cover != null && !cover.isEmpty() ? uploadService.saveImage(cover) : null;
-        long id = articleRepository.create(category, title, content, summary, coverImage, user.id());
-        return getArticle(id);
+        boolean articleCreated = false;
+        try {
+            long id = articleRepository.create(category, title, content, summary, coverImage, user.id());
+            articleCreated = true;
+            return getArticle(id);
+        } catch (RuntimeException e) {
+            if (!articleCreated) {
+                uploadService.deleteIfUploaded(coverImage);
+            }
+            throw e;
+        }
     }
 
     @Transactional
@@ -82,11 +91,20 @@ public class ArticleService {
         }
 
         String coverImage = existing.coverImage();
+        String newCoverImage = null;
         if (cover != null && !cover.isEmpty()) {
-            coverImage = uploadService.saveImage(cover);
+            newCoverImage = uploadService.saveImage(cover);
+            coverImage = newCoverImage;
+        }
+        try {
+            articleRepository.update(id, title, content, summary, coverImage);
+        } catch (RuntimeException e) {
+            uploadService.deleteIfUploaded(newCoverImage);
+            throw e;
+        }
+        if (newCoverImage != null) {
             uploadService.deleteIfUploaded(existing.coverImage());
         }
-        articleRepository.update(id, title, content, summary, coverImage);
         return getArticle(id);
     }
 

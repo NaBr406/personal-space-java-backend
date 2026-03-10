@@ -6,6 +6,8 @@ import cn.nabr.personalspace.model.UserSummary;
 import cn.nabr.personalspace.repository.AuthRepository;
 import cn.nabr.personalspace.repository.UserRepository;
 import cn.nabr.personalspace.util.InviteCodeGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -13,7 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class UserService {
@@ -21,6 +26,7 @@ public class UserService {
     private final UploadService uploadService;
     private final AuthRepository authRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public UserService(UserRepository userRepository, UploadService uploadService, AuthRepository authRepository) {
         this.userRepository = userRepository;
@@ -45,7 +51,12 @@ public class UserService {
         if (avatar != null && !avatar.isEmpty()) {
             String oldAvatar = userRepository.findAvatarById(user.id()).orElse(null);
             String newAvatar = uploadService.saveImage(avatar);
-            userRepository.updateAvatar(user.id(), newAvatar);
+            try {
+                userRepository.updateAvatar(user.id(), newAvatar);
+            } catch (RuntimeException e) {
+                uploadService.deleteIfUploaded(newAvatar);
+                throw e;
+            }
             if (oldAvatar != null && !oldAvatar.equals("/default-avatar.png")) {
                 uploadService.deleteIfUploaded(oldAvatar);
             }
@@ -173,11 +184,48 @@ public class UserService {
         if ("superadmin".equals(target.role())) {
             throw new ApiException(HttpStatus.FORBIDDEN, "不能删除超级管理员");
         }
-        if (target.avatar() != null && !target.avatar().equals("/default-avatar.png")) {
-            uploadService.deleteIfUploaded(target.avatar());
+        Set<String> filesToDelete = collectUserFiles(userId, target.avatar());
+        for (String file : filesToDelete) {
+            uploadService.deleteIfUploaded(file);
         }
         userRepository.deleteUserDeep(userId);
         return Map.of("message", "用户已删除");
+    }
+
+    private Set<String> collectUserFiles(long userId, String avatar) {
+        Set<String> files = new LinkedHashSet<>();
+        if (avatar != null && !avatar.isBlank() && !avatar.equals("/default-avatar.png")) {
+            files.add(avatar);
+        }
+
+        List<UserRepository.PostMediaRecord> postMedia = userRepository.findPostMediaByUserId(userId);
+        for (UserRepository.PostMediaRecord media : postMedia) {
+            addIfNotBlank(files, media.image());
+            addIfNotBlank(files, media.thumbnail());
+            files.addAll(parseJsonArray(media.images()));
+            files.addAll(parseJsonArray(media.thumbnails()));
+        }
+
+        files.addAll(userRepository.findArticleCoverImagesByUserId(userId));
+        return files;
+    }
+
+    private List<String> parseJsonArray(String json) {
+        if (json == null || json.isBlank()) {
+            return List.of();
+        }
+        try {
+            return objectMapper.readValue(json, objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
+        } catch (JsonProcessingException ignored) {
+            return List.of();
+        }
+    }
+
+    private void addIfNotBlank(Set<String> files, String value) {
+        if (value == null || value.isBlank()) {
+            return;
+        }
+        files.add(value);
     }
 
     public static String extractClientIp(HttpServletRequest request) {

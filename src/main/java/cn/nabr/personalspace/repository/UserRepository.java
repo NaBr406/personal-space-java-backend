@@ -192,6 +192,27 @@ public class UserRepository {
         );
     }
 
+    public List<PostMediaRecord> findPostMediaByUserId(long userId) {
+        return jdbcTemplate.query(
+                "SELECT image, thumbnail, images, thumbnails FROM posts WHERE user_id = ?",
+                (rs, rowNum) -> new PostMediaRecord(
+                        rs.getString("image"),
+                        rs.getString("thumbnail"),
+                        rs.getString("images"),
+                        rs.getString("thumbnails")
+                ),
+                userId
+        );
+    }
+
+    public List<String> findArticleCoverImagesByUserId(long userId) {
+        return jdbcTemplate.query(
+                "SELECT cover_image FROM articles WHERE user_id = ? AND cover_image IS NOT NULL AND cover_image != ''",
+                (rs, rowNum) -> rs.getString("cover_image"),
+                userId
+        );
+    }
+
     public void deleteUserDeep(long userId) {
         jdbcTemplate.update("DELETE FROM notifications WHERE user_id = ? OR from_user_id = ?", userId, userId);
         jdbcTemplate.update("DELETE FROM likes WHERE user_id = ?", userId);
@@ -207,4 +228,5 @@ public class UserRepository {
 
     public record UserIdentity(long id, String username, String role) {}
     public record ResetCodeRecord(long id, long userId, String code) {}
+    public record PostMediaRecord(String image, String thumbnail, String images, String thumbnails) {}
 }
