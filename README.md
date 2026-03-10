@@ -81,6 +81,16 @@
 - `config`：配置和启动初始化
 - `util`：邀请码、token hash 之类的小工具
 
+### 当前兼容性说明
+
+为了尽量少改现有前端，Java 版在关键返回字段上继续沿用 JS 版习惯：
+
+- 动态 / 评论 / 通知 / 公告 / 文章 / 访客 等响应，优先保持 `snake_case`
+- 例如：`created_at`、`author_name`、`author_avatar`、`like_count`、`comment_count`、`cover_image`、`parent_id`
+- 登录、注册、`/api/me` 这类用户信息接口，继续保留前端已经在用的普通字段（如 `nickname`、`avatar`、`role`）
+
+这样做的目的是：**尽量让现有 JS 前端少改就能直接接 Java 后端**。
+
 ## 目录结构
 
 ```text

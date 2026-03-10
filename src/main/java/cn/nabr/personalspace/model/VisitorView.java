@@ -1,10 +1,12 @@
 package cn.nabr.personalspace.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public record VisitorView(
         long id,
-        Long userId,
+        @JsonProperty("user_id") Long userId,
         String ip,
-        String visitedAt,
+        @JsonProperty("visited_at") String visitedAt,
         String nickname,
         String avatar
 ) {}

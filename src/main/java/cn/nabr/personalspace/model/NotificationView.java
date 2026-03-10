@@ -1,16 +1,18 @@
 package cn.nabr.personalspace.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public record NotificationView(
         long id,
-        long userId,
+        @JsonProperty("user_id") long userId,
         String type,
-        Long fromUserId,
-        Long postId,
-        Long commentId,
+        @JsonProperty("from_user_id") Long fromUserId,
+        @JsonProperty("post_id") Long postId,
+        @JsonProperty("comment_id") Long commentId,
         String content,
-        int isRead,
-        String createdAt,
-        String fromNickname,
-        String fromAvatar,
-        String postContent
+        @JsonProperty("is_read") int isRead,
+        @JsonProperty("created_at") String createdAt,
+        @JsonProperty("from_nickname") String fromNickname,
+        @JsonProperty("from_avatar") String fromAvatar,
+        @JsonProperty("post_content") String postContent
 ) {}

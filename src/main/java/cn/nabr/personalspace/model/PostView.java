@@ -1,5 +1,7 @@
 package cn.nabr.personalspace.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public record PostView(
         long id,
         String content,
@@ -7,12 +9,12 @@ public record PostView(
         String thumbnail,
         String images,
         String thumbnails,
-        long userId,
+        @JsonProperty("user_id") long userId,
         int views,
-        String createdAt,
-        String authorName,
-        String authorAvatar,
-        int likeCount,
-        int commentCount,
+        @JsonProperty("created_at") String createdAt,
+        @JsonProperty("author_name") String authorName,
+        @JsonProperty("author_avatar") String authorAvatar,
+        @JsonProperty("like_count") int likeCount,
+        @JsonProperty("comment_count") int commentCount,
         Boolean liked
 ) {}

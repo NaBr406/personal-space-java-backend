@@ -1,12 +1,14 @@
 package cn.nabr.personalspace.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public record AnnouncementView(
         long id,
-        long userId,
+        @JsonProperty("user_id") long userId,
         String title,
         String content,
         int pinned,
-        String createdAt,
-        String authorName,
-        String authorAvatar
+        @JsonProperty("created_at") String createdAt,
+        @JsonProperty("author_name") String authorName,
+        @JsonProperty("author_avatar") String authorAvatar
 ) {}
