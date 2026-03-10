@@ -5,6 +5,7 @@ import cn.nabr.personalspace.exception.ApiException;
 import cn.nabr.personalspace.model.UserSummary;
 import cn.nabr.personalspace.repository.AuthRepository;
 import cn.nabr.personalspace.repository.UserRepository;
+import cn.nabr.personalspace.util.InviteCodeDate;
 import cn.nabr.personalspace.util.InviteCodeGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -112,20 +113,22 @@ public class UserService {
     }
 
     public Map<String, Object> getInviteCode() {
-        String code = userRepository.findTodayInviteCode().orElseGet(() -> {
+        String today = InviteCodeDate.todayUtc();
+        String code = userRepository.findInviteCodeByDate(today).orElseGet(() -> {
             String newCode = InviteCodeGenerator.generate();
-            authRepository.createInviteCode(newCode, java.time.LocalDate.now().toString());
+            authRepository.createInviteCode(newCode, today);
             return newCode;
         });
-        return Map.of("code", code, "date", java.time.LocalDate.now().toString());
+        return Map.of("code", code, "date", today);
     }
 
     @Transactional
     public Map<String, Object> refreshInviteCode() {
-        userRepository.deleteUnusedInviteCodesToday();
+        String today = InviteCodeDate.todayUtc();
+        userRepository.deleteUnusedInviteCodesByDate(today);
         String newCode = InviteCodeGenerator.generate();
-        authRepository.createInviteCode(newCode, java.time.LocalDate.now().toString());
-        return Map.of("code", newCode, "date", java.time.LocalDate.now().toString());
+        authRepository.createInviteCode(newCode, today);
+        return Map.of("code", newCode, "date", today);
     }
 
     @Transactional

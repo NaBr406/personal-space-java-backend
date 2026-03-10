@@ -4,6 +4,8 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteDataSource;
 
 import javax.sql.DataSource;
 import java.nio.file.Files;
@@ -22,6 +24,14 @@ public class DataSourceConfig {
             if (parent != null) {
                 Files.createDirectories(parent);
             }
+
+            SQLiteConfig config = new SQLiteConfig();
+            config.enforceForeignKeys(true);
+            config.setJournalMode(SQLiteConfig.JournalMode.WAL);
+
+            SQLiteDataSource dataSource = new SQLiteDataSource(config);
+            dataSource.setUrl(url);
+            return dataSource;
         }
 
         DriverManagerDataSource dataSource = new DriverManagerDataSource();

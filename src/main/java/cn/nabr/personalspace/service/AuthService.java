@@ -7,13 +7,12 @@ import cn.nabr.personalspace.exception.ApiException;
 import cn.nabr.personalspace.model.UserAuthView;
 import cn.nabr.personalspace.model.UserSummary;
 import cn.nabr.personalspace.repository.AuthRepository;
+import cn.nabr.personalspace.util.InviteCodeDate;
 import cn.nabr.personalspace.util.TokenUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
 
 @Service
 public class AuthService {
@@ -31,7 +30,7 @@ public class AuthService {
     @Transactional
     public UserAuthView register(RegisterRequest request, String clientIp) {
         String inviteCode = request.getInviteCode().trim().toUpperCase();
-        String today = LocalDate.now().toString();
+        String today = InviteCodeDate.todayUtc();
         if (authRepository.findUnusedInviteCodeId(inviteCode, today).isEmpty()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "邀请码无效或已过期");
         }

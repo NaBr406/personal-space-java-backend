@@ -105,16 +105,17 @@ public class UserRepository {
         jdbcTemplate.update("UPDATE users SET role = ? WHERE id = ?", role, userId);
     }
 
-    public Optional<String> findTodayInviteCode() {
+    public Optional<String> findInviteCodeByDate(String date) {
         List<String> codes = jdbcTemplate.query(
-                "SELECT code FROM invite_codes WHERE created_date = date('now') AND used_by IS NULL LIMIT 1",
-                (rs, rowNum) -> rs.getString("code")
+                "SELECT code FROM invite_codes WHERE created_date = ? AND used_by IS NULL LIMIT 1",
+                (rs, rowNum) -> rs.getString("code"),
+                date
         );
         return codes.stream().findFirst();
     }
 
-    public void deleteUnusedInviteCodesToday() {
-        jdbcTemplate.update("DELETE FROM invite_codes WHERE created_date = date('now') AND used_by IS NULL");
+    public void deleteUnusedInviteCodesByDate(String date) {
+        jdbcTemplate.update("DELETE FROM invite_codes WHERE created_date = ? AND used_by IS NULL", date);
     }
 
     public void invalidateResetCodes(long userId) {

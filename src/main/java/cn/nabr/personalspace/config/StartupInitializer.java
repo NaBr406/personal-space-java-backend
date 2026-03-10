@@ -1,13 +1,13 @@
 package cn.nabr.personalspace.config;
 
 import cn.nabr.personalspace.repository.AuthRepository;
+import cn.nabr.personalspace.util.InviteCodeDate;
 import cn.nabr.personalspace.util.InviteCodeGenerator;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
 import java.nio.file.Files;
-import java.time.LocalDate;
 
 @Component
 public class StartupInitializer {
@@ -34,7 +34,7 @@ public class StartupInitializer {
             );
         }
 
-        String today = LocalDate.now().toString();
+        String today = InviteCodeDate.todayUtc();
         if (!authRepository.hasUnusedInviteCodeForDate(today)) {
             authRepository.createInviteCode(InviteCodeGenerator.generate(), today);
         }
