@@ -63,12 +63,12 @@
   - `DELETE /api/announcements/{id}`
   - `PATCH /api/announcements/{id}/pin`
 
-## 还没迁过去的
+## 当前还在收尾的
 
-这版已经进入第六期，下面这些还没做：
+这版已经能本地跑，也补了基础部署说明；现在主要还在收尾这些：
 
 - 前端联调与接口细节打磨
-- 部署脚本 / 服务化说明
+- 上线前再做一轮实际站点验证
 
 ## 和 JS 版的对应关系
 
@@ -114,13 +114,25 @@ src/main/java/cn/nabr/personalspace
 ./mvnw test
 ```
 
+### 本地沙盒启动
+
+```bash
+bash scripts/run-sandbox.sh
+```
+
 ### 打包
 
 ```bash
 ./mvnw -q -DskipTests package
 ```
 
-### 运行
+### 打包后运行
+
+```bash
+bash scripts/run-prod.sh
+```
+
+### 原始开发命令
 
 ```bash
 ./mvnw spring-boot:run
@@ -134,13 +146,23 @@ src/main/java/cn/nabr/personalspace
 ./data/personal-space-java-sandbox.db
 ```
 
+如果你直接用仓库脚本：
+
+- `scripts/run-sandbox.sh` 默认写到 `./data/sandbox/`
+- `scripts/run-prod.sh` 默认写到 `./data/prod/`
+
 ## 可配环境变量
 
 - `PORT`：端口，默认 `3001`
+- `APP_ENV`：环境名，默认 `sandbox`
 - `APP_DB_PATH`：SQLite 文件路径
 - `APP_DATA_DIR`：数据目录
-- `APP_ENV`：环境名，默认 `sandbox`
-- `ADMIN_PASSWORD`：默认超管密码
+- `APP_UPLOAD_DIR`：上传目录
+- `ADMIN_PASSWORD`：默认超管密码，仅**首次自动创建超管**时生效
+- `APP_SUPER_ADMIN_USERNAME`：默认超管用户名
+- `APP_SUPER_ADMIN_NICKNAME`：默认超管昵称
+
+更完整的服务器部署、`systemd`、`Nginx`、前端配对说明见：`DEPLOY.md`
 
 ## 当前上传实现说明
 
@@ -182,13 +204,20 @@ http://127.0.0.1:8081
 python3 tools/frontend_proxy.py --port 8082 --backend http://127.0.0.1:3001
 ```
 
+## 部署速览
+
+- 后端打包后可直接用：`bash scripts/run-prod.sh`
+- 生产环境变量样例：`deploy/backend.env.example`
+- 服务器部署步骤：`DEPLOY.md`
+- 如果前端还是沿用现有代理脚本，继续用：`tools/frontend_proxy.py`
+- 如果前端已经是静态文件，直接让 `Nginx` 代理 `/api/` 和 `/uploads/` 到 Java 后端即可
+
 ## 适合怎么继续往下做
 
 我建议后面按这个顺序补：
 
 1. 接前端联调（重点验证多图/缩略图字段）
-2. 部署脚本 / PM2 或 systemd 说明
-3. 接沙盒前端实测
-4. 再考虑正式迁移
+2. 接沙盒前端实测
+3. 再考虑正式迁移
 
 这样你以后看源码时，会比直接啃原来那坨 JS 更有参与感。
