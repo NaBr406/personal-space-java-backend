@@ -174,7 +174,7 @@ public class PostRepository {
 
     public void addLikeNotification(long userId, long fromUserId, long postId) {
         jdbcTemplate.update(
-                "INSERT INTO notifications (user_id, type, from_user_id, post_id) VALUES (?, 'like', ?, ?)",
+                "INSERT INTO notifications (user_id, type, from_user_id, post_id, created_at) VALUES (?, 'like', ?, ?, datetime('now', 'localtime'))",
                 userId,
                 fromUserId,
                 postId
@@ -268,7 +268,7 @@ public class PostRepository {
 
     public void addReplyNotification(long userId, long fromUserId, long postId, long commentId, String content) {
         jdbcTemplate.update(
-                "INSERT INTO notifications (user_id, type, from_user_id, post_id, comment_id, content) VALUES (?, 'reply', ?, ?, ?, ?)",
+                "INSERT INTO notifications (user_id, type, from_user_id, post_id, comment_id, content, created_at) VALUES (?, 'reply', ?, ?, ?, ?, datetime('now', 'localtime'))",
                 userId,
                 fromUserId,
                 postId,
@@ -279,7 +279,7 @@ public class PostRepository {
 
     public void addCommentNotification(long userId, long fromUserId, long postId, long commentId, String content) {
         jdbcTemplate.update(
-                "INSERT INTO notifications (user_id, type, from_user_id, post_id, comment_id, content) VALUES (?, 'comment', ?, ?, ?, ?)",
+                "INSERT INTO notifications (user_id, type, from_user_id, post_id, comment_id, content, created_at) VALUES (?, 'comment', ?, ?, ?, ?, datetime('now', 'localtime'))",
                 userId,
                 fromUserId,
                 postId,

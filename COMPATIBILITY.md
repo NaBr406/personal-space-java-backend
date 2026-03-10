@@ -42,6 +42,13 @@ This repo is being matched against the existing JS frontend in
 
 ## Fixed in this pass
 
+- Legacy notification timestamps no longer depend on older SQLite defaults
+  - like / comment / reply notifications now write `created_at` explicitly with
+    localtime when the Java backend is pointed at an existing JS-created
+    database
+  - this keeps the notification times shown by `public/app.js` from looking
+    hours old right after a fresh interaction on schemas whose
+    `notifications.created_at` default is not frontend-friendly
 - Stale detail-route view pings now match the JS backend fallback
   - `POST /api/posts/:id/view` and `POST /api/articles/:id/view` now return
     `{ views: 0 }` when the target has already been deleted or never existed
