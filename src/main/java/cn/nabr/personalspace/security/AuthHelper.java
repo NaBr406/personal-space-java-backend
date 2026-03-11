@@ -9,6 +9,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
+/**
+ * 认证辅助类。
+ * 封装 Bearer token 提取、当前用户查询，以及角色校验。
+ */
 @Component
 public class AuthHelper {
     private final AuthRepository authRepository;
@@ -37,6 +41,9 @@ public class AuthHelper {
         return user;
     }
 
+    /**
+     * 当前接口允许匿名时，可以用这个方法尝试解析登录用户。
+     */
     public java.util.Optional<UserSummary> getUser(HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || authHeader.isBlank() || !authHeader.startsWith("Bearer ")) {
@@ -49,6 +56,9 @@ public class AuthHelper {
         return authRepository.findUserByTokenHash(TokenUtils.sha256(token));
     }
 
+    /**
+     * 登出时只需要拿到原始 Bearer token，再交给 repository 按 hash 删除 session。
+     */
     public String extractBearerToken(HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {

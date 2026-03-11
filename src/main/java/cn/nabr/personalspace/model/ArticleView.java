@@ -2,6 +2,9 @@ package cn.nabr.personalspace.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * 文章详情和列表项的统一视图。
+ */
 public record ArticleView(
         long id,
         String category,

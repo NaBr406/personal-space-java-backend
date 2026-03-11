@@ -8,6 +8,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.OffsetDateTime;
 import java.util.Map;
 
+/**
+ * 健康检查接口。
+ * 主要给部署后的 smoke test 和反向代理探活使用。
+ */
 @RestController
 @RequestMapping("/api")
 public class HealthController {
@@ -17,6 +21,9 @@ public class HealthController {
         this.appProperties = appProperties;
     }
 
+    /**
+     * 顺手带上环境名和当前时间，方便区分正式 / 沙盒实例。
+     */
     @GetMapping("/health")
     public Map<String, Object> health() {
         return Map.of(

@@ -13,6 +13,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * 文章业务。
+ * 负责分类分页、封面上传，以及文章的增删改查。
+ */
 @Service
 public class ArticleService {
     private final ArticleRepository articleRepository;
@@ -51,6 +55,9 @@ public class ArticleService {
         return Map.of("views", articleRepository.incrementViews(id));
     }
 
+    /**
+     * 创建文章时如果封面已落盘但数据库失败，要把新文件回收掉。
+     */
     @Transactional
     public ArticleView createArticle(ArticleRequest request, MultipartFile cover, UserSummary user) {
         String category = normalizeCategory(request.getCategory());
@@ -77,6 +84,9 @@ public class ArticleService {
         }
     }
 
+    /**
+     * 更新封面时先保存新图；数据库更新成功后，再删除旧图。
+     */
     @Transactional
     public ArticleView updateArticle(long id, ArticleRequest request, MultipartFile cover) {
         ArticleView existing = getArticle(id);
@@ -116,6 +126,9 @@ public class ArticleService {
         return Map.of("ok", true);
     }
 
+    /**
+     * 当前只开放 blog / chitchat 两个分类，和现有前端页面保持一致。
+     */
     private void validateCategory(String category) {
         if (category == null || (!"blog".equals(category) && !"chitchat".equals(category))) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "category 必须是 blog 或 chitchat");

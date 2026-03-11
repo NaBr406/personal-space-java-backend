@@ -4,6 +4,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.nio.file.Path;
 
+/**
+ * 项目自定义配置。
+ * 主要放数据目录、上传目录、默认头像，以及初始化超管账号这些参数。
+ */
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {
     private String envName = "sandbox";
@@ -29,10 +33,16 @@ public class AppProperties {
     public String getSuperAdminPassword() { return superAdminPassword; }
     public void setSuperAdminPassword(String superAdminPassword) { this.superAdminPassword = superAdminPassword; }
 
+    /**
+     * 统一把数据目录转成规范化 Path，方便文件操作复用。
+     */
     public Path dataDirPath() {
         return Path.of(dataDir).normalize();
     }
 
+    /**
+     * 上传目录和静态资源映射都走这里，避免每处自己拼路径。
+     */
     public Path uploadDirPath() {
         return Path.of(uploadDir).normalize();
     }

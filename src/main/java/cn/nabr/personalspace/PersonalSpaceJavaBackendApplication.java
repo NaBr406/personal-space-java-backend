@@ -5,6 +5,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
+/**
+ * 应用启动入口。
+ */
 @SpringBootApplication
 @EnableConfigurationProperties(AppProperties.class)
 public class PersonalSpaceJavaBackendApplication {

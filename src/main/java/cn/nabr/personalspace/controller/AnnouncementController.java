@@ -8,6 +8,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+/**
+ * 公告相关接口。
+ * 负责公告列表、详情，以及超级管理员的发布/删除/置顶操作。
+ */
 @RestController
 @RequestMapping("/api/announcements")
 public class AnnouncementController {
@@ -19,6 +23,9 @@ public class AnnouncementController {
         this.authHelper = authHelper;
     }
 
+    /**
+     * 前端不传 page/limit 时，会走 service 里的兼容逻辑直接返回完整列表。
+     */
     @GetMapping
     public Map<String, Object> listAnnouncements(
             @RequestParam(required = false) Integer page,
@@ -44,6 +51,9 @@ public class AnnouncementController {
         return announcementService.deleteAnnouncement(id);
     }
 
+    /**
+     * 置顶接口本质是切换状态，不区分“置顶”和“取消置顶”两个单独动作。
+     */
     @PatchMapping("/{id}/pin")
     public Object togglePin(@PathVariable long id, HttpServletRequest httpRequest) {
         authHelper.requireSuperAdmin(httpRequest);

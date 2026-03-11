@@ -2,16 +2,25 @@ package cn.nabr.personalspace.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
+/**
+ * 注册请求体。
+ */
 public class RegisterRequest {
+    // 登录用户名。
     @NotBlank(message = "用户名和密码必填")
     private String username;
+    // 登录密码。
     @NotBlank(message = "用户名和密码必填")
     private String password;
+    // 展示昵称；不传时会回退成用户名。
     private String nickname;
+    // 当天有效的邀请码。
     @NotBlank(message = "请填写邀请码")
     private String inviteCode;
+    // 验证码题目的 token。
     @NotBlank(message = "请完成验证码")
     private String captchaToken;
+    // 用户提交的验证码答案。
     @NotBlank(message = "请完成验证码")
     private String captchaAnswer;
 

@@ -12,6 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * 公告业务。
+ */
 @Service
 public class AnnouncementService {
     private final AnnouncementRepository announcementRepository;
@@ -20,6 +23,9 @@ public class AnnouncementService {
         this.announcementRepository = announcementRepository;
     }
 
+    /**
+     * 不传分页参数时返回完整列表，兼容旧前端默认行为。
+     */
     public Map<String, Object> listAnnouncements(Integer page, Integer limit) {
         int total = announcementRepository.countAll();
         boolean useFrontendDefault = page == null && limit == null;
@@ -70,6 +76,9 @@ public class AnnouncementService {
         return Map.of("ok", true);
     }
 
+    /**
+     * 直接按当前状态翻转 pinned。
+     */
     @Transactional
     public Map<String, Object> togglePin(long id) {
         AnnouncementView current = getAnnouncement(id);

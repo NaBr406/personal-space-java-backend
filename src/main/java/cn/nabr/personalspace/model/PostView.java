@@ -2,6 +2,10 @@ package cn.nabr.personalspace.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * 动态接口返回结构。
+ * 兼容了旧前端的单图字段和多图字段。
+ */
 public record PostView(
         long id,
         String content,

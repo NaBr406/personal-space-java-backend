@@ -7,6 +7,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * 文章 / 博客 / 杂谈接口。
+ * 文章创建和更新走 multipart，是为了顺手把封面图一起传上来。
+ */
 @RestController
 @RequestMapping("/api/articles")
 public class ArticleController {
@@ -37,6 +41,9 @@ public class ArticleController {
         return articleService.addView(id);
     }
 
+    /**
+     * 前端用表单方式上传文章正文和封面，这里再手动组装成 ArticleRequest。
+     */
     @PostMapping(consumes = "multipart/form-data")
     public Object createArticle(
             @RequestParam String category,
@@ -55,6 +62,9 @@ public class ArticleController {
         return articleService.createArticle(articleRequest, cover, user);
     }
 
+    /**
+     * 更新文章时沿用旧前端的表单字段格式，避免另外维护一套 JSON 版本。
+     */
     @PutMapping(value = "/{id}", consumes = "multipart/form-data")
     public Object updateArticle(
             @PathVariable long id,

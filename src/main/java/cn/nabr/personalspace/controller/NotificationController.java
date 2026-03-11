@@ -9,6 +9,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * 通知中心接口。
+ * 提供列表、未读数，以及单条/批量已读。
+ */
 @RestController
 @RequestMapping("/api/notifications")
 public class NotificationController {
@@ -32,6 +36,9 @@ public class NotificationController {
         return notificationService.unreadCount(user.id());
     }
 
+    /**
+     * 铃铛下拉里常用的一键已读入口。
+     */
     @PostMapping("/read-all")
     public Object readAll(HttpServletRequest request) {
         var user = authHelper.requireUser(request);

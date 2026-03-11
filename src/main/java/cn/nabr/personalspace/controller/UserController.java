@@ -7,6 +7,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * 用户相关接口。
+ * 包括个人资料、密码、邀请码、访客记录，以及后台用户管理。
+ */
 @RestController
 @RequestMapping("/api")
 public class UserController {
@@ -24,6 +28,9 @@ public class UserController {
         return userService.updateProfile(user, request);
     }
 
+    /**
+     * 改昵称和传头像会一起走 multipart，和旧前端的表单提交方式保持一致。
+     */
     @PutMapping(value = "/me", consumes = "multipart/form-data")
     public Object updateProfileMultipart(
             @RequestParam(value = "nickname", required = false) String nickname,
@@ -93,6 +100,9 @@ public class UserController {
         return userService.resetPassword(request);
     }
 
+    /**
+     * 访客上报允许匿名访问，用来给后台统计最近访问情况。
+     */
     @PostMapping("/visit")
     public Object recordVisit(HttpServletRequest request) {
         var user = authHelper.getUser(request).orElse(null);
