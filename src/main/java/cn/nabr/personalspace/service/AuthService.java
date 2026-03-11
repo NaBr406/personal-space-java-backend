@@ -14,6 +14,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 认证业务。
+ * 这里尽量对齐旧 Node 版的注册、登录和 session 行为，方便平滑切换。
+ */
 @Service
 public class AuthService {
     private final AuthRepository authRepository;
@@ -30,6 +34,7 @@ public class AuthService {
     @Transactional
     public UserAuthView register(RegisterRequest request, String clientIp) {
         String inviteCode = request.getInviteCode().trim().toUpperCase();
+        // 邀请码按 UTC 日期分桶，避免服务器时区变化把“当天邀请码”算串天。
         String today = InviteCodeDate.todayUtc();
         if (authRepository.findUnusedInviteCodeId(inviteCode, today).isEmpty()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "邀请码无效或已过期");
@@ -64,6 +69,7 @@ public class AuthService {
         );
         authRepository.consumeInviteCode(userId, inviteCode, today);
         String token = TokenUtils.newToken();
+        // 数据库里只存 token 摘要，库泄露时不会直接暴露登录态。
         authRepository.createSession(userId, TokenUtils.sha256(token));
         UserSummary user = authRepository.findUserSummaryById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "注册失败"));
@@ -77,6 +83,7 @@ public class AuthService {
             throw new ApiException(HttpStatus.FORBIDDEN, "用户名或密码错误");
         }
         String token = TokenUtils.newToken();
+        // 登录成功后签发一条新的 session，和旧版多设备并存的行为一致。
         authRepository.createSession(dbUser.id(), TokenUtils.sha256(token));
         return new UserAuthView(dbUser.id(), dbUser.username(), dbUser.nickname(), dbUser.avatar(), dbUser.role(), token);
     }

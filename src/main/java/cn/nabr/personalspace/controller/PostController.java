@@ -11,6 +11,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 动态相关接口。
+ * /api/posts 同时支持 JSON 和 multipart，两种入口最后都会走同一套业务逻辑。
+ */
 @RestController
 public class PostController {
     private final PostService postService;

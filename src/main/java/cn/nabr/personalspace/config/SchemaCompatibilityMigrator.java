@@ -4,6 +4,10 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+/**
+ * 给旧版 SQLite 数据库补齐 Java 版依赖的新字段。
+ * 目标是做到可重复执行：缺什么补什么，不主动改已有数据。
+ */
 @Component
 public class SchemaCompatibilityMigrator {
     private final JdbcTemplate jdbcTemplate;
@@ -14,6 +18,7 @@ public class SchemaCompatibilityMigrator {
 
     @PostConstruct
     public void migrate() {
+        // 启动时自动补列，这样旧库接进来时不用先手工跑迁移脚本。
         ensureColumn("posts", "images", "ALTER TABLE posts ADD COLUMN images TEXT");
         ensureColumn("posts", "thumbnails", "ALTER TABLE posts ADD COLUMN thumbnails TEXT");
         ensureColumn("posts", "user_id", "ALTER TABLE posts ADD COLUMN user_id INTEGER");
@@ -23,6 +28,9 @@ public class SchemaCompatibilityMigrator {
         ensureColumn("comments", "reply_to_user_id", "ALTER TABLE comments ADD COLUMN reply_to_user_id INTEGER");
     }
 
+    /**
+     * 只有在“表存在且列不存在”时才执行 ALTER，保证多次启动也安全。
+     */
     void ensureColumn(String tableName, String columnName, String alterSql) {
         if (!tableExists(tableName) || columnExists(tableName, columnName)) {
             return;

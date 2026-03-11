@@ -21,6 +21,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * 动态相关业务。
+ * 这里统一处理分页、上传、点赞、评论，以及对应的通知联动。
+ */
 @Service
 public class PostService {
     private final PostRepository postRepository;
@@ -69,8 +73,13 @@ public class PostService {
         return createPostInternal(content, images, user);
     }
 
+    /**
+     * JSON 提交和 multipart 提交最后都会汇总到这里，
+     * 这样上传、校验、回滚逻辑只维护一份。
+     */
     private PostView createPostInternal(String rawContent, List<MultipartFile> images, UserSummary user) {
         String content = rawContent == null ? null : rawContent.trim();
+        // 先把图片落盘；如果后面数据库写入失败，再统一回收这些文件。
         List<UploadService.UploadedImage> uploadedImages = uploadService.saveImagesWithThumbnails(images, 9);
         if ((content == null || content.isEmpty()) && uploadedImages.isEmpty()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "内容和图片至少需要一个");
@@ -78,6 +87,7 @@ public class PostService {
 
         List<String> imageUrls = uploadedImages.stream().map(UploadService.UploadedImage::imageUrl).collect(Collectors.toList());
         List<String> thumbnailUrls = uploadedImages.stream().map(UploadService.UploadedImage::thumbnailUrl).collect(Collectors.toList());
+        // 兼容旧版前端：单图字段保留首图，多图字段再额外存完整数组。
         String image = imageUrls.isEmpty() ? null : imageUrls.get(0);
         String thumbnail = thumbnailUrls.isEmpty() ? null : thumbnailUrls.get(0);
         String imagesJson = imageUrls.isEmpty() ? null : toJson(imageUrls);
@@ -118,6 +128,7 @@ public class PostService {
         } else {
             postRepository.insertLike(postId, user.id());
             if (post.userId() != user.id()) {
+                // 给别人点赞才发通知，自己点自己就别刷通知了。
                 postRepository.addLikeNotification(post.userId(), user.id(), postId);
             }
         }
@@ -159,6 +170,7 @@ public class PostService {
         if (replyToUserId != null && replyToUserId != user.id()) {
             postRepository.addReplyNotification(replyToUserId, user.id(), postId, commentId, snippet);
         }
+        // 回复别人评论和评论帖子是两种通知，避免同一条操作给同一个人重复发。
         if (post.userId() != user.id() && (replyToUserId == null || post.userId() != replyToUserId)) {
             postRepository.addCommentNotification(post.userId(), user.id(), postId, commentId, snippet);
         }
@@ -202,6 +214,9 @@ public class PostService {
         );
     }
 
+    /**
+     * 删除动态前，先把它引用到的所有上传文件收集出来一起清掉。
+     */
     private void deletePostFiles(PostView post) {
         Set<String> files = new LinkedHashSet<>();
         addIfNotBlank(files, post.image());
@@ -213,6 +228,10 @@ public class PostService {
         }
     }
 
+    /**
+     * 旧数据里可能没有多图字段，或者字段内容已经损坏。
+     * 这里选择静默兜底，避免删除流程因为脏数据中断。
+     */
     private List<String> parseJsonArray(String json) {
         if (json == null || json.isBlank()) {
             return List.of();

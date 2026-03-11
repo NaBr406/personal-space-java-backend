@@ -14,6 +14,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 动态、点赞、评论相关的 SQL 访问层。
+ * 尽量一次把前端要的聚合字段查全，减少 service 层二次拼装。
+ */
 @Repository
 public class PostRepository {
     private final JdbcTemplate jdbcTemplate;
@@ -59,6 +63,7 @@ public class PostRepository {
                        (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count
                 """);
         List<Object> params = new ArrayList<>();
+        // 已登录时顺手查出 liked，未登录就返回 NULL，和旧前端判断逻辑保持一致。
         if (currentUserId != null) {
             sql.append(", (SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM likes WHERE post_id = p.id AND user_id = ?) AS liked ");
             params.add(currentUserId);
@@ -125,6 +130,7 @@ public class PostRepository {
             ps.setLong(6, userId);
             return ps;
         }, keyHolder);
+        // 某些 SQLite/JDBC 场景可能拿不到 generated key，这里做一个兜底查询。
         Number key = keyHolder.getKey();
         if (key != null) {
             return key.longValue();
@@ -308,6 +314,9 @@ public class PostRepository {
         jdbcTemplate.update("DELETE FROM comments WHERE id = ?", commentId);
     }
 
+    /**
+     * 兼容前端传开始/结束日期的几种组合，统一拼到 posts 查询里。
+     */
     private void appendDateWhere(StringBuilder sql, List<Object> params, String startDate, String endDate) {
         if (startDate != null && !startDate.isBlank() && endDate != null && !endDate.isBlank()) {
             sql.append("WHERE p.created_at >= ? AND p.created_at < datetime(?, '+1 day') ");
