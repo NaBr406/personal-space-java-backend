@@ -5,6 +5,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
+/**
+ * 通知业务薄封装。
+ * 目前主要负责把 repository 结果包装成前端约定的响应格式。
+ */
 @Service
 public class NotificationService {
     private final NotificationRepository notificationRepository;
@@ -17,6 +21,9 @@ public class NotificationService {
         return notificationRepository.findByUserId(userId);
     }
 
+    /**
+     * 给前端铃铛上的未读角标使用。
+     */
     public Map<String, Object> unreadCount(long userId) {
         return Map.of("count", notificationRepository.countUnread(userId));
     }

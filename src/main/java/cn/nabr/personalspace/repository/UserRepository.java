@@ -9,6 +9,10 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 用户域数据访问层。
+ * 既包含个人资料，也包含后台管理、重置码、访客记录等查询。
+ */
 @Repository
 public class UserRepository {
     private final JdbcTemplate jdbcTemplate;
@@ -153,6 +157,9 @@ public class UserRepository {
         jdbcTemplate.update("INSERT INTO visitors (user_id, ip, user_agent) VALUES (?, ?, ?)", userId, ip, userAgent);
     }
 
+    /**
+     * 已登录用户 5 分钟内只记一次访问，避免页面频繁上报把统计刷爆。
+     */
     public boolean hasRecentVisitByUser(long userId) {
         Integer count = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM visitors WHERE user_id = ? AND visited_at > datetime('now','localtime','-5 minutes')",
@@ -214,6 +221,9 @@ public class UserRepository {
         );
     }
 
+    /**
+     * 删除用户时把强关联数据一并清掉，避免留下一堆孤儿记录。
+     */
     public void deleteUserDeep(long userId) {
         jdbcTemplate.update("DELETE FROM notifications WHERE user_id = ? OR from_user_id = ?", userId, userId);
         jdbcTemplate.update("DELETE FROM likes WHERE user_id = ?", userId);

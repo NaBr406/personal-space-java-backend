@@ -1,9 +1,16 @@
 package cn.nabr.personalspace.dto;
 
+/**
+ * 文章创建/更新请求体。
+ */
 public class ArticleRequest {
+    // 分类：blog 或 chitchat。
     private String category;
+    // 标题。
     private String title;
+    // 正文 HTML / 富文本内容。
     private String content;
+    // 摘要，可为空。
     private String summary;
 
     public String getCategory() {

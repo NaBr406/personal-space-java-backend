@@ -12,6 +12,9 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 文章表访问层。
+ */
 @Repository
 public class ArticleRepository {
     private final JdbcTemplate jdbcTemplate;
@@ -35,6 +38,9 @@ public class ArticleRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    /**
+     * 分类列表页查询，同时把作者昵称和头像一并查出来。
+     */
     public List<ArticleView> findPage(String category, int page, int limit) {
         int offset = (page - 1) * limit;
         return jdbcTemplate.query("""
@@ -77,6 +83,7 @@ public class ArticleRepository {
             ps.setLong(6, userId);
             return ps;
         }, keyHolder);
+        // SQLite 某些场景可能拿不到 generated key，这里做一个简单兜底。
         Number key = keyHolder.getKey();
         if (key != null) {
             return key.longValue();

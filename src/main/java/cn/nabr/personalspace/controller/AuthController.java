@@ -15,6 +15,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+/**
+ * 登录注册相关接口。
+ * 这里把验证码、限流、登录态查询集中放在一起，方便前端按旧接口习惯接入。
+ */
 @RestController
 @RequestMapping("/api")
 public class AuthController {
@@ -37,6 +41,9 @@ public class AuthController {
         this.authRateLimitService = authRateLimitService;
     }
 
+    /**
+     * 注册前的人机校验题目。
+     */
     @GetMapping("/captcha")
     public Map<String, String> captcha() {
         return captchaService.createCaptcha();
@@ -71,6 +78,9 @@ public class AuthController {
         return Map.of("message", "已登出");
     }
 
+    /**
+     * 返回当前登录用户，并显式禁用缓存，避免浏览器拿到过期登录态。
+     */
     @GetMapping("/me")
     public ResponseEntity<?> me(HttpServletRequest request) {
         return ResponseEntity.ok()
@@ -80,6 +90,9 @@ public class AuthController {
                 .body(authHelper.requireUser(request));
     }
 
+    /**
+     * 认证限流按客户端 IP 统计，优先信任反代头，再退回容器看到的 remoteAddr。
+     */
     private String extractClientIp(HttpServletRequest request) {
         String xff = request.getHeader("x-forwarded-for");
         if (xff != null && !xff.isBlank()) {

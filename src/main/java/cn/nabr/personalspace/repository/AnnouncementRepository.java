@@ -12,6 +12,9 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 公告表访问层。
+ */
 @Repository
 public class AnnouncementRepository {
     private final JdbcTemplate jdbcTemplate;
@@ -31,6 +34,9 @@ public class AnnouncementRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    /**
+     * 公告列表优先按置顶状态排序，再按发布时间倒序。
+     */
     public List<AnnouncementView> findPage(int page, int limit) {
         int offset = (page - 1) * limit;
         return jdbcTemplate.query("""
@@ -70,6 +76,7 @@ public class AnnouncementRepository {
             ps.setInt(4, pinned ? 1 : 0);
             return ps;
         }, keyHolder);
+        // SQLite 某些场景可能拿不到 generated key，这里做一个简单兜底。
         Number key = keyHolder.getKey();
         if (key != null) {
             return key.longValue();

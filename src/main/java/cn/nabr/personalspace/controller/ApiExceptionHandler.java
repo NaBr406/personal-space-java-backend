@@ -12,6 +12,10 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 统一把后端异常转成前端可直接消费的错误响应。
+ * 这里尽量保持报错文案稳定，避免前端联调时出现意外分支。
+ */
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
@@ -32,6 +36,9 @@ public class ApiExceptionHandler {
         return ResponseEntity.badRequest().body(Map.of("error", "图片不能超过 100MB"));
     }
 
+    /**
+     * 兜底异常不要把内部栈信息直接暴露给前端，只返回统一提示。
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleUnexpected(Exception ex) {
         Map<String, Object> body = new HashMap<>();

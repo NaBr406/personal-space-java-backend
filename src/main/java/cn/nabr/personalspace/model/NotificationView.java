@@ -2,6 +2,9 @@ package cn.nabr.personalspace.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * 通知中心列表项。
+ */
 public record NotificationView(
         long id,
         @JsonProperty("user_id") long userId,

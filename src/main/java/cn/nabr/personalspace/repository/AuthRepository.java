@@ -8,6 +8,10 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 认证相关数据访问层。
+ * 覆盖用户登录、session、邀请码和启动初始化会用到的几类查询。
+ */
 @Repository
 public class AuthRepository {
     private final JdbcTemplate jdbcTemplate;
@@ -74,6 +78,9 @@ public class AuthRepository {
         return users.stream().findFirst();
     }
 
+    /**
+     * Bearer token 进库前会先做 hash，所以这里按 token 摘要反查用户。
+     */
     public Optional<UserSummary> findUserByTokenHash(String tokenHash) {
         List<UserSummary> users = jdbcTemplate.query(
                 "SELECT u.id, u.username, u.nickname, u.avatar, u.role FROM users u JOIN sessions s ON u.id = s.user_id WHERE s.token_hash = ?",
@@ -115,6 +122,9 @@ public class AuthRepository {
         return id == null ? 0L : id;
     }
 
+    /**
+     * session 表只保存 token hash，本身不落明文 token。
+     */
     public void createSession(long userId, String tokenHash) {
         jdbcTemplate.update("INSERT INTO sessions (user_id, token_hash) VALUES (?, ?)", userId, tokenHash);
     }

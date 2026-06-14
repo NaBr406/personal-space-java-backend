@@ -4,18 +4,28 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 
+/**
+ * token 相关工具。
+ * 负责生成随机 token 和计算 SHA-256 摘要。
+ */
 public final class TokenUtils {
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final char[] HEX = "0123456789abcdef".toCharArray();
 
     private TokenUtils() {}
 
+    /**
+     * 生成 32 字节随机 token，再转成十六进制字符串。
+     */
     public static String newToken() {
         byte[] bytes = new byte[32];
         RANDOM.nextBytes(bytes);
         return toHex(bytes);
     }
 
+    /**
+     * session 入库前统一做 hash，避免明文 token 落库。
+     */
     public static String sha256(String value) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

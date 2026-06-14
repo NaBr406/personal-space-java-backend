@@ -9,6 +9,9 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * 简单算术验证码服务。
+ */
 @Service
 public class CaptchaService {
     private static final int CAPTCHA_MAX = 5000;
@@ -16,6 +19,9 @@ public class CaptchaService {
     private final SecureRandom random = new SecureRandom();
     private final Map<String, CaptchaEntry> captchaStore = new ConcurrentHashMap<>();
 
+    /**
+     * 题目只生成加减法，既够轻量，也方便前端直接展示。
+     */
     public Map<String, String> createCaptcha() {
         cleanupExpired();
         if (captchaStore.size() >= CAPTCHA_MAX) {
@@ -33,6 +39,9 @@ public class CaptchaService {
         return Map.of("question", question, "token", token);
     }
 
+    /**
+     * 验证成功后立刻删除 token，防止同一题被重复利用。
+     */
     public void verify(String token, String answerText) {
         if (token == null || token.isBlank() || answerText == null || answerText.isBlank()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "请完成验证码");

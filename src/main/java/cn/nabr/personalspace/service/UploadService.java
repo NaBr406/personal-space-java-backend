@@ -21,6 +21,10 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * 图片上传服务。
+ * 负责做格式校验、文件落盘、缩略图生成，以及失败后的资源回收。
+ */
 @Service
 public class UploadService {
     private static final int THUMBNAIL_MAX_WIDTH = 480;
@@ -70,6 +74,10 @@ public class UploadService {
         }
     }
 
+    /**
+     * 发动态时使用的上传入口。
+     * 原图必须保存成功；缩略图则尽力生成，失败时回退为原图 URL。
+     */
     public UploadedImage saveImageWithThumbnail(MultipartFile file) {
         validateImage(file);
 
@@ -132,6 +140,9 @@ public class UploadService {
         }
     }
 
+    /**
+     * 只允许删除 /uploads/ 目录下的文件，顺手挡住路径穿越和误删。
+     */
     public void deleteIfUploaded(String fileUrl) {
         if (fileUrl == null || fileUrl.isBlank()) {
             return;
@@ -160,6 +171,7 @@ public class UploadService {
         String extension = extractOriginalExtension(originalName);
         boolean allowedExtension = ALLOWED_EXTENSIONS.contains(extension);
         boolean allowedMime = ALLOWED_MIME_HINTS.stream().anyMatch(contentType::contains);
+        // 后缀和 MIME 提示都要对上，尽量跟旧版接口的校验行为保持一致。
         if (!allowedExtension || !allowedMime) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "只支持 jpg/png/gif/webp 格式");
         }
@@ -179,6 +191,10 @@ public class UploadService {
         return valid;
     }
 
+    /**
+     * 统一把缩略图压成 jpg。
+     * 这样前端列表展示时体积更稳定，也不用额外处理透明背景。
+     */
     private void generateThumbnail(Path sourcePath, Path thumbnailPath) throws IOException {
         BufferedImage source = ImageIO.read(sourcePath.toFile());
         if (source == null) {
@@ -211,6 +227,7 @@ public class UploadService {
     }
 
     private int[] scaleSize(int width, int height, int maxWidth, int maxHeight) {
+        // 按比例缩放，不拉伸；如果原图本来就小，就直接保留原尺寸。
         double ratio = Math.min(maxWidth / (double) width, maxHeight / (double) height);
         if (ratio > 1) {
             ratio = 1;

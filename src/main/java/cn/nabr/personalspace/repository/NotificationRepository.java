@@ -7,6 +7,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * 通知表访问层。
+ */
 @Repository
 public class NotificationRepository {
     private final JdbcTemplate jdbcTemplate;
@@ -30,6 +33,9 @@ public class NotificationRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    /**
+     * 通知列表最多返回最近 50 条，足够前端铃铛弹层使用。
+     */
     public List<NotificationView> findByUserId(long userId) {
         return jdbcTemplate.query("""
                 SELECT n.*, u.nickname AS from_nickname, u.avatar AS from_avatar,
