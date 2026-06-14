@@ -21,18 +21,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * 用户域业务。
+ * 包含资料修改、角色管理、邀请码/重置码，以及访客记录这几块。
+ */
 @Service
 public class UserService {
     private final UserRepository userRepository;
     private final UploadService uploadService;
     private final AuthRepository authRepository;
+    private final AdminService adminService;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public UserService(UserRepository userRepository, UploadService uploadService, AuthRepository authRepository) {
+    public UserService(UserRepository userRepository, UploadService uploadService, AuthRepository authRepository, AdminService adminService) {
         this.userRepository = userRepository;
         this.uploadService = uploadService;
         this.authRepository = authRepository;
+        this.adminService = adminService;
     }
 
     public UserSummary updateProfile(UserSummary user, UpdateProfileRequest request) {
@@ -50,6 +56,7 @@ public class UserService {
             userRepository.updateNickname(user.id(), safeNickname);
         }
         if (avatar != null && !avatar.isEmpty()) {
+            // 先传新头像，再改数据库；如果中途失败，把新文件回收掉。
             String oldAvatar = userRepository.findAvatarById(user.id()).orElse(null);
             String newAvatar = uploadService.saveImage(avatar);
             try {
@@ -98,7 +105,7 @@ public class UserService {
     }
 
     @Transactional
-    public Map<String, Object> updateRole(long userId, RoleUpdateRequest request) {
+    public Map<String, Object> updateRole(long userId, RoleUpdateRequest request, UserSummary operator) {
         String role = request.getRole();
         if (!"guest".equals(role) && !"admin".equals(role)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "角色只能是 guest 或 admin");
@@ -109,6 +116,7 @@ public class UserService {
             throw new ApiException(HttpStatus.FORBIDDEN, "不能修改超级管理员");
         }
         userRepository.updateRole(userId, role);
+        adminService.logAction(operator, "user.role.update", "user", userId, Map.of("role", role, "username", target.username()));
         return Map.of("ok", true);
     }
 
@@ -123,22 +131,24 @@ public class UserService {
     }
 
     @Transactional
-    public Map<String, Object> refreshInviteCode() {
+    public Map<String, Object> refreshInviteCode(UserSummary operator) {
         String today = InviteCodeDate.todayUtc();
         userRepository.deleteUnusedInviteCodesByDate(today);
         String newCode = InviteCodeGenerator.generate();
         authRepository.createInviteCode(newCode, today);
+        adminService.logAction(operator, "invite.refresh", "invite_code", today, Map.of("date", today));
         return Map.of("code", newCode, "date", today);
     }
 
     @Transactional
-    public Map<String, Object> createResetCode(long userId) {
+    public Map<String, Object> createResetCode(long userId, UserSummary operator) {
         UserRepository.UserIdentity user = userRepository.findAdminViewById(userId)
                 .map(v -> new UserRepository.UserIdentity(v.id(), v.username(), v.role()))
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "用户不存在"));
         userRepository.invalidateResetCodes(user.id());
         String code = InviteCodeGenerator.generate();
         userRepository.createResetCode(user.id(), code);
+        adminService.logAction(operator, "user.reset_code.create", "user", user.id(), Map.of("username", user.username()));
         return Map.of("code", code);
     }
 
@@ -181,7 +191,7 @@ public class UserService {
     }
 
     @Transactional
-    public Map<String, Object> deleteUser(long userId) {
+    public Map<String, Object> deleteUser(long userId, UserSummary operator) {
         var target = userRepository.findAdminViewById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "用户不存在"));
         if ("superadmin".equals(target.role())) {
@@ -192,9 +202,13 @@ public class UserService {
             uploadService.deleteIfUploaded(file);
         }
         userRepository.deleteUserDeep(userId);
+        adminService.logAction(operator, "user.delete", "user", userId, Map.of("username", target.username(), "nickname", target.nickname()));
         return Map.of("message", "用户已删除");
     }
 
+    /**
+     * 删除用户前，把他名下可能残留的上传资源一次收集出来。
+     */
     private Set<String> collectUserFiles(long userId, String avatar) {
         Set<String> files = new LinkedHashSet<>();
         if (avatar != null && !avatar.isBlank() && !avatar.equals("/default-avatar.png")) {
@@ -231,6 +245,9 @@ public class UserService {
         files.add(value);
     }
 
+    /**
+     * 优先取反代头里的真实 IP；本地直连时再退回 remoteAddr。
+     */
     public static String extractClientIp(HttpServletRequest request) {
         String xff = request.getHeader("x-forwarded-for");
         if (xff != null && !xff.isBlank()) {

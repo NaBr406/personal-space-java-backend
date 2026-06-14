@@ -13,14 +13,20 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * 文章业务。
+ * 负责分类分页、封面上传，以及文章的增删改查。
+ */
 @Service
 public class ArticleService {
     private final ArticleRepository articleRepository;
     private final UploadService uploadService;
+    private final AdminService adminService;
 
-    public ArticleService(ArticleRepository articleRepository, UploadService uploadService) {
+    public ArticleService(ArticleRepository articleRepository, UploadService uploadService, AdminService adminService) {
         this.articleRepository = articleRepository;
         this.uploadService = uploadService;
+        this.adminService = adminService;
     }
 
     public Map<String, Object> listArticles(String category, int page, int limit) {
@@ -51,6 +57,9 @@ public class ArticleService {
         return Map.of("views", articleRepository.incrementViews(id));
     }
 
+    /**
+     * 创建文章时如果封面已落盘但数据库失败，要把新文件回收掉。
+     */
     @Transactional
     public ArticleView createArticle(ArticleRequest request, MultipartFile cover, UserSummary user) {
         String category = normalizeCategory(request.getCategory());
@@ -68,7 +77,9 @@ public class ArticleService {
         try {
             long id = articleRepository.create(category, title, content, summary, coverImage, user.id());
             articleCreated = true;
-            return getArticle(id);
+            ArticleView created = getArticle(id);
+            adminService.logAction(user, "article.create", "article", id, Map.of("title", title, "category", category));
+            return created;
         } catch (RuntimeException e) {
             if (!articleCreated) {
                 uploadService.deleteIfUploaded(coverImage);
@@ -77,8 +88,11 @@ public class ArticleService {
         }
     }
 
+    /**
+     * 更新封面时先保存新图；数据库更新成功后，再删除旧图。
+     */
     @Transactional
-    public ArticleView updateArticle(long id, ArticleRequest request, MultipartFile cover) {
+    public ArticleView updateArticle(long id, ArticleRequest request, MultipartFile cover, UserSummary user) {
         ArticleView existing = getArticle(id);
         String title = normalizeText(request.getTitle());
         String content = normalizeText(request.getContent());
@@ -105,17 +119,23 @@ public class ArticleService {
         if (newCoverImage != null) {
             uploadService.deleteIfUploaded(existing.coverImage());
         }
-        return getArticle(id);
+        ArticleView updated = getArticle(id);
+        adminService.logAction(user, "article.update", "article", id, Map.of("title", title));
+        return updated;
     }
 
     @Transactional
-    public Map<String, Object> deleteArticle(long id) {
+    public Map<String, Object> deleteArticle(long id, UserSummary user) {
         ArticleView existing = getArticle(id);
         uploadService.deleteIfUploaded(existing.coverImage());
         articleRepository.delete(id);
+        adminService.logAction(user, "article.delete", "article", id, Map.of("title", existing.title(), "category", existing.category()));
         return Map.of("ok", true);
     }
 
+    /**
+     * 当前只开放 blog / chitchat 两个分类，和现有前端页面保持一致。
+     */
     private void validateCategory(String category) {
         if (category == null || (!"blog".equals(category) && !"chitchat".equals(category))) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "category 必须是 blog 或 chitchat");

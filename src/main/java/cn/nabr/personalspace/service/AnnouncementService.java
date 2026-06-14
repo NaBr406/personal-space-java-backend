@@ -12,14 +12,22 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * 公告业务。
+ */
 @Service
 public class AnnouncementService {
     private final AnnouncementRepository announcementRepository;
+    private final AdminService adminService;
 
-    public AnnouncementService(AnnouncementRepository announcementRepository) {
+    public AnnouncementService(AnnouncementRepository announcementRepository, AdminService adminService) {
         this.announcementRepository = announcementRepository;
+        this.adminService = adminService;
     }
 
+    /**
+     * 不传分页参数时返回完整列表，兼容旧前端默认行为。
+     */
     public Map<String, Object> listAnnouncements(Integer page, Integer limit) {
         int total = announcementRepository.countAll();
         boolean useFrontendDefault = page == null && limit == null;
@@ -60,21 +68,28 @@ public class AnnouncementService {
         }
         boolean pinned = Boolean.TRUE.equals(request.getPinned());
         long id = announcementRepository.create(user.id(), title, content, pinned);
-        return getAnnouncement(id);
+        AnnouncementView created = getAnnouncement(id);
+        adminService.logAction(user, "announcement.create", "announcement", id, Map.of("title", title, "pinned", pinned));
+        return created;
     }
 
     @Transactional
-    public Map<String, Object> deleteAnnouncement(long id) {
-        getAnnouncement(id);
+    public Map<String, Object> deleteAnnouncement(long id, UserSummary user) {
+        AnnouncementView existing = getAnnouncement(id);
         announcementRepository.delete(id);
+        adminService.logAction(user, "announcement.delete", "announcement", id, Map.of("title", existing.title()));
         return Map.of("ok", true);
     }
 
+    /**
+     * 直接按当前状态翻转 pinned。
+     */
     @Transactional
-    public Map<String, Object> togglePin(long id) {
+    public Map<String, Object> togglePin(long id, UserSummary user) {
         AnnouncementView current = getAnnouncement(id);
         boolean pinned = current.pinned() == 0;
         announcementRepository.updatePinned(id, pinned);
+        adminService.logAction(user, "announcement.pin.toggle", "announcement", id, Map.of("title", current.title(), "pinned", pinned));
         return Map.of("ok", true, "pinned", pinned);
     }
 }

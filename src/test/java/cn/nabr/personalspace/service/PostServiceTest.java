@@ -28,6 +28,9 @@ class PostServiceTest {
     @Mock
     private UploadService uploadService;
 
+    @Mock
+    private AdminService adminService;
+
     @InjectMocks
     private PostService postService;
 
